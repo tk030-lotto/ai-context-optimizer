@@ -34,23 +34,30 @@ export function extractDependencies(fileContent: string, fileExtension: string):
   const ext = fileExtension.toLowerCase();
 
   if (ext === '.py') {
-    // Pythonのインポート抽出
-    // 1. `import a, b, c` のパターン
-    const importRegex = /^\s*import\s+([a-zA-Z0-9_\s,.]+)/gm;
-    let match;
-    while ((match = importRegex.exec(cleanedContent)) !== null) {
-      const parts = match[1].split(',');
-      for (const part of parts) {
-        const name = part.trim().split(/\s+/)[0]; // `import a as b` の対策
-        if (name) dependencies.add(name);
-      }
-    }
+    // Pythonのインポート抽出は行単位で安全に処理
+    const lines = cleanedContent.split(/\r?\n/);
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
 
-    // 2. `from a import b` のパターン
-    const fromImportRegex = /^\s*from\s+([a-zA-Z0-9_\.]+)\s+import/gm;
-    while ((match = fromImportRegex.exec(cleanedContent)) !== null) {
-      const name = match[1].trim();
-      if (name) dependencies.add(name);
+      // 1. `import a, b, c` または `import a as b`
+      if (trimmed.startsWith('import ')) {
+        const importContent = trimmed.substring(7).trim();
+        const parts = importContent.split(',');
+        for (const part of parts) {
+          const name = part.trim().split(/\s+/)[0];
+          if (name) dependencies.add(name);
+        }
+      }
+
+      // 2. `from a import b`
+      if (trimmed.startsWith('from ')) {
+        const fromMatch = trimmed.match(/^from\s+([a-zA-Z0-9_\.]+)\s+import/);
+        if (fromMatch) {
+          const name = fromMatch[1].trim();
+          if (name) dependencies.add(name);
+        }
+      }
     }
   } else {
     // JS/TSのインポート抽出
