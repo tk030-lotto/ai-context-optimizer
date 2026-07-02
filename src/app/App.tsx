@@ -4,6 +4,7 @@ import { analyzeProject } from '../lib/parser/project-analyzer';
 import { generateAuditPack } from '../lib/formatters/audit';
 import { generateDeepAuditPack } from '../lib/formatters/deep-audit';
 import { generateHandoverPack } from '../lib/formatters/handover';
+import { generateTransferPack } from '../lib/formatters/transfer';
 import { calculateReadTime } from '../lib/parser/token-estimator';
 import { ProjectAnalysisData } from '../lib/parser/types';
 
@@ -17,12 +18,13 @@ export default function App() {
   
   // 新設ステート
   const [projectData, setProjectData] = useState<ProjectAnalysisData | null>(null);
-  const [activeTab, setActiveTab] = useState<'tree' | 'audit' | 'deep-audit' | 'handover'>('tree');
+  const [activeTab, setActiveTab] = useState<'tree' | 'audit' | 'deep-audit' | 'handover' | 'transfer'>('tree');
   const [targetMaxTokens, setTargetMaxTokens] = useState<number>(4000);
   const [auditCopySuccess, setAuditCopySuccess] = useState(false);
   const [selectedDeepAuditFile, setSelectedDeepAuditFile] = useState<string>('');
   const [deepAuditCopySuccess, setDeepAuditCopySuccess] = useState(false);
   const [handoverCopySuccess, setHandoverCopySuccess] = useState(false);
+  const [transferCopySuccess, setTransferCopySuccess] = useState(false);
 
   const calculateSummary = (nodes: FileNode[]) => {
     let fileCount = 0;
@@ -58,6 +60,7 @@ export default function App() {
         setAuditCopySuccess(false);
         setDeepAuditCopySuccess(false);
         setHandoverCopySuccess(false);
+        setTransferCopySuccess(false);
 
         // 走査の実行
         const tree = await traverseDirectory(handle);
@@ -153,6 +156,18 @@ export default function App() {
     }
   };
 
+  const handleCopyTransfer = async (markdownText: string) => {
+    if (!markdownText) return;
+    try {
+      await navigator.clipboard.writeText(markdownText);
+      setTransferCopySuccess(true);
+      setTimeout(() => setTransferCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy Transfer Pack: ', err);
+      alert('コピーに失敗しました。');
+    }
+  };
+
   // Audit Pack の動的計算
   const auditPackResult = useMemo(() => {
     if (!projectData) return null;
@@ -185,6 +200,17 @@ export default function App() {
     if (!handoverPackResult) return null;
     return calculateReadTime(handoverPackResult.estimatedTokens, handoverPackResult.markdown.length);
   }, [handoverPackResult]);
+
+  // Transfer Pack の動的計算
+  const transferPackResult = useMemo(() => {
+    if (!projectData) return null;
+    return generateTransferPack(projectData, { maxTokens: targetMaxTokens });
+  }, [projectData, targetMaxTokens]);
+
+  const transferReadTime = useMemo(() => {
+    if (!transferPackResult) return null;
+    return calculateReadTime(transferPackResult.estimatedTokens, transferPackResult.markdown.length);
+  }, [transferPackResult]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-brand-500 selection:text-white">
@@ -322,6 +348,16 @@ export default function App() {
                 } cursor-pointer`}
               >
                 🤝 引継ぎ用パック (Handover Pack)
+              </button>
+              <button
+                onClick={() => setActiveTab('transfer')}
+                className={`flex-1 md:flex-initial px-6 py-3 text-sm font-bold transition-all duration-300 border-b-2 ${
+                  activeTab === 'transfer'
+                    ? 'border-brand-500 text-brand-400 bg-brand-500/5'
+                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                } cursor-pointer`}
+              >
+                🔄 AI移行用パック (Transfer Pack)
               </button>
             </div>
 
@@ -644,6 +680,95 @@ export default function App() {
                 <div className="relative">
                   <pre className="text-left text-xs font-mono bg-slate-950 p-5 rounded-2xl border border-slate-900 text-slate-300 overflow-auto max-h-[480px] leading-relaxed selection:bg-brand-800 selection:text-white">
                     <code>{handoverPackResult.markdown}</code>
+                  </pre>
+                </div>
+              </div>
+            )}
+
+            {/* Transfer Pack View Panel */}
+            {activeTab === 'transfer' && transferPackResult && (
+              <div className="bg-slate-900/40 border border-t-0 border-slate-800 rounded-b-3xl p-6 backdrop-blur-md shadow-2xl space-y-6 animate-fadeIn">
+                
+                {/* Token limits controls & Stats info */}
+                <div className="bg-slate-950/60 border border-slate-850 p-5 rounded-2xl space-y-4">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-bold text-white">目標最大トークン制限調整</h4>
+                      <p className="text-xs text-slate-400">移行パックの最大サイズを定義し、情報を自動的に縮退します。</p>
+                    </div>
+                    
+                    {/* Token Slider Controls */}
+                    <div className="flex items-center space-x-3 w-full md:w-auto">
+                      <input
+                        type="range"
+                        min="2000"
+                        max="6000"
+                        step="500"
+                        value={targetMaxTokens}
+                        onChange={(e) => setTargetMaxTokens(Number(e.target.value))}
+                        className="w-full md:w-48 accent-brand-500"
+                      />
+                      <span className="text-xs font-mono font-bold text-brand-400 bg-brand-500/10 px-3 py-1 rounded border border-brand-500/20 whitespace-nowrap">
+                        {targetMaxTokens.toLocaleString()} tokens
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-slate-850 my-2" />
+
+                  {/* Estimation Results Panel */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase block">推定トークン数</span>
+                      <span className="text-lg font-black text-white font-mono">{transferPackResult.estimatedTokens.toLocaleString()}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase block">適用された縮退レベル</span>
+                      <span className="text-lg font-black text-brand-400 font-mono">
+                        Level {transferPackResult.fallbackLevel}
+                        <span className="text-[10px] text-slate-400 font-normal ml-1">
+                          {transferPackResult.fallbackLevel === 0 ? '(フル出力)' :
+                           transferPackResult.fallbackLevel === 1 ? '(完了タスク制限)' :
+                           transferPackResult.fallbackLevel === 2 ? '(完了省略/決定制限)' :
+                           transferPackResult.fallbackLevel === 3 ? '(機能簡略/アクション制限)' :
+                           transferPackResult.fallbackLevel === 4 ? '(決定省略)' : '(最小構成)'}
+                        </span>
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase block">AI処理想定時間</span>
+                      <span className="text-lg font-black text-emerald-400 font-mono">{transferReadTime?.aiTimeFormatted}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase block">人間読了想定時間</span>
+                      <span className="text-lg font-black text-teal-400 font-mono">{transferReadTime?.humanTimeFormatted}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Markdown View Header */}
+                <div className="flex items-center justify-between border-b border-slate-800/60 pb-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-bold text-white">🔄 AI移行用パック (Markdown) プレビュー</span>
+                    <span className="text-[10px] bg-slate-800 text-slate-350 px-2 py-0.5 rounded border border-slate-700">コピー＆ペースト用</span>
+                  </div>
+                  <button
+                    onClick={() => handleCopyTransfer(transferPackResult.markdown)}
+                    className={`px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all duration-300 shadow-md ${
+                      transferCopySuccess
+                        ? 'bg-emerald-600 hover:bg-emerald-500'
+                        : 'bg-brand-600 hover:bg-brand-500 hover:shadow-brand-500/10'
+                    } cursor-pointer`}
+                  >
+                    {transferCopySuccess ? '✓ コピー完了！' : 'Transfer Pack をコピー'}
+                  </button>
+                </div>
+
+                {/* Markdown preview rendering */}
+                <div className="relative">
+                  <pre className="text-left text-xs font-mono bg-slate-950 p-5 rounded-2xl border border-slate-900 text-slate-300 overflow-auto max-h-[480px] leading-relaxed selection:bg-brand-800 selection:text-white">
+                    <code>{transferPackResult.markdown}</code>
                   </pre>
                 </div>
               </div>
