@@ -1,0 +1,230 @@
+# AI開発コンテキスト最適化ツール
+
+## 出力フォーマット仕様書
+
+### 1. Chat Handover Format
+
+```markdown
+# Chat Continuation Summary
+
+## Project
+
+## Current Status
+
+## Completed Tasks
+
+## Current Task
+
+## Next Task
+
+## Constraints
+
+## Known Issues
+```
+
+用途
+
+同一AI内での新規チャット移行
+
+---
+
+### 2. AI Transfer Format
+
+```markdown
+# AI Transfer Package
+
+## Project Overview
+
+## Architecture
+
+## Feature List
+
+## Completed Features
+
+## Current Status
+
+## Constraints
+
+## Design Decisions
+
+## Recommended Next Actions
+```
+
+用途
+
+異なるAI間での移行
+
+---
+
+### 3. Audit Pack Format
+
+```markdown
+# Audit Pack
+
+## System Overview
+
+## Architecture
+
+## Feature List
+
+## Folder Structure
+
+## Module Map
+
+## Dependencies
+
+## Data Flow
+
+## Entry Points
+
+## External Libraries
+
+## Risk Areas
+
+## Review Focus
+```
+
+用途
+
+Sonnet監査
+
+---
+
+### 4. Deep Audit Pack Format
+
+```markdown
+# Deep Audit Pack
+
+## Module Name
+
+## Purpose
+
+## Related Files
+
+## Dependencies
+
+## Public APIs
+
+## Classes
+
+## Functions
+
+## Data Flow
+
+## Code Summary
+
+## Potential Risks
+```
+
+用途
+
+特定モジュール詳細監査
+
+---
+
+### 5. Documentation Format
+
+```markdown
+# Project Documentation
+
+## Overview
+
+## Purpose
+
+## Background
+
+## Architecture
+
+## Main Features
+
+## Technical Highlights
+
+## Benefits
+
+## Future Plans
+```
+
+用途
+
+記事作成
+
+---
+
+### 6. Phase Summary Format
+
+```markdown
+# Phase Summary
+
+## Phase
+
+## Completed Work
+
+## Deliverables
+
+## Issues
+
+## Decisions
+
+## Next Phase
+
+## Handover Notes
+```
+
+用途
+
+フェーズ完了時自動生成
+
+---
+
+## 出力共通ルール
+
+### Markdown固定
+
+全モード共通
+
+### コピーペースト前提
+
+外部連携なし
+
+### AI依存なし
+
+対象
+
+* ChatGPT
+* Gemini
+* Sonnet
+* Codex
+* その他LLM
+
+### 出力サイズ制御
+
+原則
+
+コード全文出力禁止
+
+許可
+
+* 要約
+* 構造情報
+* 依存関係
+* 機能一覧
+
+詳細コードは
+
+Deep Audit Pack
+
+利用時のみ出力する。
+
+---
+
+## 設計方針
+
+本ツールは
+
+「コードを出力するツール」
+
+ではなく
+
+「AIが理解できる知識へ変換するツール」
+
+として設計する。

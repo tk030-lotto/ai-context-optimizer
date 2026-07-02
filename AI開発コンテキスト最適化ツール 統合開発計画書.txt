@@ -1,0 +1,263 @@
+# AI開発コンテキスト最適化ツール
+
+## 統合開発計画書（完全版）
+
+### Document Information
+
+Document Name:
+AI開発コンテキスト最適化ツール 統合開発計画書
+
+Version:
+1.0
+
+Status:
+Development Ready
+
+---
+
+# 1. プロジェクト概要
+
+## プロジェクト名
+
+AI Development Context Optimizer
+
+## 開発目的
+
+AI駆動開発において発生するコンテキスト肥大化問題を解決し、AIモデル間の引継ぎ、最終監査、文書作成を効率化する。
+
+## 解決対象
+
+* AIチャット移行時の情報喪失
+* AIモデル間移行時の情報伝達負荷
+* 最終監査時のトークン消費増大
+* ドキュメント作成時の情報整理負荷
+
+---
+
+# 2. 開発方針
+
+## 基本方針
+
+* 完全ローカル動作
+* 単体ツール構成
+* API非依存
+* MCP非依存
+* Markdown出力
+* AI非依存
+* コピーペースト運用
+
+## 対応言語
+
+* TypeScript
+* JavaScript
+* Python
+
+---
+
+# 3. システム構成
+
+## 入力
+
+プロジェクトルートフォルダ
+
+含まれる対象
+
+* ソースコード
+* README.md
+* システム仕様書
+* 統合開発計画書
+* 設計文書
+* 設定ファイル
+
+## 出力
+
+Markdown
+
+---
+
+# 4. 出力モード
+
+## Chat Handover Mode
+
+用途
+
+同一AI内の新規チャット移行
+
+対象
+
+* ChatGPT
+* Gemini
+* Sonnet
+* Codex
+
+---
+
+## AI Transfer Mode
+
+用途
+
+異なるAI間の引継ぎ
+
+対象
+
+* ChatGPT → Gemini
+* Gemini → Sonnet
+* Sonnet → ChatGPT
+* Codex → Gemini
+
+---
+
+## Audit Mode
+
+用途
+
+最終監査
+
+対象
+
+* Sonnet
+
+---
+
+## Deep Audit Mode
+
+用途
+
+監査対象の詳細分析
+
+---
+
+## Documentation Mode
+
+用途
+
+記事作成
+文書化
+
+---
+
+## Phase Summary Mode
+
+用途
+
+フェーズ終了時の引継ぎ
+
+---
+
+# 5. 開発フェーズ
+
+## Phase 1
+
+基盤構築
+
+成果物
+
+* プロジェクト構成
+* 設定管理
+
+---
+
+## Phase 2
+
+プロジェクト解析エンジン
+
+成果物
+
+* ファイル解析
+* ドキュメント解析
+
+---
+
+## Phase 3
+
+知識圧縮エンジン
+
+成果物
+
+* 機能抽出
+* 構造抽出
+* 依存関係抽出
+
+---
+
+## Phase 4
+
+Audit Mode生成機能
+
+---
+
+## Phase 5
+
+Deep Audit Mode生成機能
+
+---
+
+## Phase 6
+
+Chat Handover Mode生成機能
+
+---
+
+## Phase 7
+
+AI Transfer Mode生成機能
+
+---
+
+## Phase 8
+
+Documentation Mode生成機能
+
+---
+
+## Phase 9
+
+Phase Summary生成機能
+
+---
+
+## Phase 10
+
+テスト・検証
+
+---
+
+## Phase 11
+
+最終監査
+
+---
+
+## Phase 12
+
+リリース
+
+---
+
+# 6. 工程管理表
+
+| Phase | 内容                 | 状態  |
+| ----- | ------------------ | --- |
+| 1     | 基盤構築               | 未着手 |
+| 2     | 解析エンジン             | 未着手 |
+| 3     | 知識圧縮エンジン           | 未着手 |
+| 4     | Audit Mode         | 未着手 |
+| 5     | Deep Audit Mode    | 未着手 |
+| 6     | Chat Handover Mode | 未着手 |
+| 7     | AI Transfer Mode   | 未着手 |
+| 8     | Documentation Mode | 未着手 |
+| 9     | Phase Summary Mode | 未着手 |
+| 10    | テスト・検証             | 未着手 |
+| 11    | 最終監査               | 未着手 |
+| 12    | リリース               | 未着手 |
+
+---
+
+# 7. 成功条件
+
+* Audit Pack生成可能
+* AI移行可能
+* 新規チャット移行可能
+* Sonnet監査支援可能
+* Documentation生成可能
+* 完全ローカル動作
