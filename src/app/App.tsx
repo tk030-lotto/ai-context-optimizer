@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { traverseDirectory, generateTreeText, formatBytes, FileNode } from '../lib/parser/file-tree';
 import { analyzeProject } from '../lib/parser/project-analyzer';
 import { generateAuditPack } from '../lib/formatters/audit';
+import { generateDeepAuditPack } from '../lib/formatters/deep-audit';
 import { calculateReadTime } from '../lib/parser/token-estimator';
 import { ProjectAnalysisData } from '../lib/parser/types';
 
@@ -15,9 +16,11 @@ export default function App() {
   
   // 新設ステート
   const [projectData, setProjectData] = useState<ProjectAnalysisData | null>(null);
-  const [activeTab, setActiveTab] = useState<'tree' | 'audit'>('tree');
+  const [activeTab, setActiveTab] = useState<'tree' | 'audit' | 'deep-audit'>('tree');
   const [targetMaxTokens, setTargetMaxTokens] = useState<number>(4000);
   const [auditCopySuccess, setAuditCopySuccess] = useState(false);
+  const [selectedDeepAuditFile, setSelectedDeepAuditFile] = useState<string>('');
+  const [deepAuditCopySuccess, setDeepAuditCopySuccess] = useState(false);
 
   const calculateSummary = (nodes: FileNode[]) => {
     let fileCount = 0;
@@ -51,6 +54,7 @@ export default function App() {
         setIsScanning(true);
         setCopySuccess(false);
         setAuditCopySuccess(false);
+        setDeepAuditCopySuccess(false);
 
         // 走査の実行
         const tree = await traverseDirectory(handle);
@@ -66,6 +70,15 @@ export default function App() {
         // プロジェクト全体を解析（依存関係・モジュール仕様・トークン推定の集約）
         const analyzed = await analyzeProject(handle.name, tree, text);
         setProjectData(analyzed);
+
+        if (analyzed.files.length > 0) {
+          // テキストファイルの中から拡張子を見て最初の適当なソースコードファイルを設定
+          const sourceFile = analyzed.files.find(f => {
+            const ext = f.name.substring(f.name.lastIndexOf('.')).toLowerCase();
+            return ['.ts', '.tsx', '.js', '.jsx', '.py'].includes(ext);
+          }) || analyzed.files[0];
+          setSelectedDeepAuditFile(sourceFile.path);
+        }
 
         setIsScanning(false);
       } else {
@@ -98,6 +111,7 @@ export default function App() {
     setScanSummary(null);
     setProjectData(null);
     setActiveTab('tree');
+    setSelectedDeepAuditFile('');
   };
 
   const handleCopyAudit = async (markdownText: string) => {
@@ -112,6 +126,18 @@ export default function App() {
     }
   };
 
+  const handleCopyDeepAudit = async (markdownText: string) => {
+    if (!markdownText) return;
+    try {
+      await navigator.clipboard.writeText(markdownText);
+      setDeepAuditCopySuccess(true);
+      setTimeout(() => setDeepAuditCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy Deep Audit Pack: ', err);
+      alert('コピーに失敗しました。');
+    }
+  };
+
   // Audit Pack の動的計算
   const auditPackResult = useMemo(() => {
     if (!projectData) return null;
@@ -122,6 +148,17 @@ export default function App() {
     if (!auditPackResult) return null;
     return calculateReadTime(auditPackResult.estimatedTokens, auditPackResult.markdown.length);
   }, [auditPackResult]);
+
+  // Deep Audit Pack の動的計算
+  const deepAuditPackResult = useMemo(() => {
+    if (!projectData || !selectedDeepAuditFile) return null;
+    return generateDeepAuditPack(projectData, selectedDeepAuditFile, { maxTokens: targetMaxTokens });
+  }, [projectData, selectedDeepAuditFile, targetMaxTokens]);
+
+  const deepAuditReadTime = useMemo(() => {
+    if (!deepAuditPackResult) return null;
+    return calculateReadTime(deepAuditPackResult.estimatedTokens, deepAuditPackResult.markdown.length);
+  }, [deepAuditPackResult]);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-brand-500 selection:text-white">
@@ -239,6 +276,16 @@ export default function App() {
                 } cursor-pointer`}
               >
                 🔍 監査用パック (Audit Pack)
+              </button>
+              <button
+                onClick={() => setActiveTab('deep-audit')}
+                className={`flex-1 md:flex-initial px-6 py-3 text-sm font-bold transition-all duration-300 border-b-2 ${
+                  activeTab === 'deep-audit'
+                    ? 'border-brand-500 text-brand-400 bg-brand-500/5'
+                    : 'border-transparent text-slate-400 hover:text-slate-200'
+                } cursor-pointer`}
+              >
+                🔍 詳細監査用パック (Deep Audit Pack)
               </button>
             </div>
 
@@ -360,6 +407,118 @@ export default function App() {
                 <div className="relative">
                   <pre className="text-left text-xs font-mono bg-slate-950 p-5 rounded-2xl border border-slate-900 text-slate-300 overflow-auto max-h-[480px] leading-relaxed selection:bg-brand-800 selection:text-white">
                     <code>{auditPackResult.markdown}</code>
+                  </pre>
+                </div>
+              </div>
+            )}
+
+            {/* Deep Audit Pack View Panel */}
+            {activeTab === 'deep-audit' && deepAuditPackResult && (
+              <div className="bg-slate-900/40 border border-t-0 border-slate-800 rounded-b-3xl p-6 backdrop-blur-md shadow-2xl space-y-6 animate-fadeIn">
+                
+                {/* Target file selector dropdown */}
+                <div className="bg-slate-950/60 border border-slate-850 p-5 rounded-2xl space-y-4">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-bold text-white">詳細監査対象ファイル選択</h4>
+                      <p className="text-xs text-slate-400">特定モジュールを選択して詳細情報を生成します。</p>
+                    </div>
+                    
+                    <div className="w-full md:w-auto">
+                      <select
+                        value={selectedDeepAuditFile}
+                        onChange={(e) => setSelectedDeepAuditFile(e.target.value)}
+                        className="w-full md:w-80 px-3 py-2.5 rounded-xl text-xs font-semibold bg-slate-900 border border-slate-800 text-slate-200 focus:outline-none focus:border-brand-500 cursor-pointer"
+                      >
+                        {projectData?.files.map(file => (
+                          <option key={file.path} value={file.path}>
+                            {file.path} ({formatBytes(file.size)})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-850 my-2" />
+
+                  {/* Token limits controls & Stats info */}
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div className="space-y-1">
+                      <h4 className="text-sm font-bold text-white">目標最大トークン制限調整</h4>
+                      <p className="text-xs text-slate-400">詳細監査パックの最大サイズを定義し、情報を自動的に縮退します。</p>
+                    </div>
+                    
+                    {/* Token Slider Controls */}
+                    <div className="flex items-center space-x-3 w-full md:w-auto">
+                      <input
+                        type="range"
+                        min="2000"
+                        max="6000"
+                        step="500"
+                        value={targetMaxTokens}
+                        onChange={(e) => setTargetMaxTokens(Number(e.target.value))}
+                        className="w-full md:w-48 accent-brand-500"
+                      />
+                      <span className="text-xs font-mono font-bold text-brand-400 bg-brand-500/10 px-3 py-1 rounded border border-brand-500/20 whitespace-nowrap">
+                        {targetMaxTokens.toLocaleString()} tokens
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-850 my-2" />
+
+                  {/* Estimation Results Panel */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase block">推定トークン数</span>
+                      <span className="text-lg font-black text-white font-mono">{deepAuditPackResult.estimatedTokens.toLocaleString()}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase block">適用された縮退レベル</span>
+                      <span className="text-lg font-black text-brand-400 font-mono">
+                        Level {deepAuditPackResult.fallbackLevel}
+                        <span className="text-[10px] text-slate-400 font-normal ml-1">
+                          {deepAuditPackResult.fallbackLevel === 0 ? '(フル出力)' :
+                           deepAuditPackResult.fallbackLevel === 1 ? '(コメント省略)' :
+                           deepAuditPackResult.fallbackLevel === 2 ? '(スケルトン出力)' :
+                           deepAuditPackResult.fallbackLevel === 3 ? '(関連/依存省略)' :
+                           deepAuditPackResult.fallbackLevel === 4 ? '(詳細シグネチャ省略)' : '(コード完全省略)'}
+                        </span>
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase block">AI処理想定時間</span>
+                      <span className="text-lg font-black text-emerald-400 font-mono">{deepAuditReadTime?.aiTimeFormatted}</span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase block">人間読了想定時間</span>
+                      <span className="text-lg font-black text-teal-400 font-mono">{deepAuditReadTime?.humanTimeFormatted}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Markdown View Header */}
+                <div className="flex items-center justify-between border-b border-slate-800/60 pb-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-bold text-white">🔍 詳細監査パック (Markdown) プレビュー</span>
+                    <span className="text-[10px] bg-slate-800 text-slate-350 px-2 py-0.5 rounded border border-slate-700">コピー＆ペースト用</span>
+                  </div>
+                  <button
+                    onClick={() => handleCopyDeepAudit(deepAuditPackResult.markdown)}
+                    className={`px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all duration-300 shadow-md ${
+                      deepAuditCopySuccess
+                        ? 'bg-emerald-600 hover:bg-emerald-500'
+                        : 'bg-brand-600 hover:bg-brand-500 hover:shadow-brand-500/10'
+                    } cursor-pointer`}
+                  >
+                    {deepAuditCopySuccess ? '✓ コピー完了！' : 'Deep Audit Pack をコピー'}
+                  </button>
+                </div>
+
+                {/* Markdown preview rendering */}
+                <div className="relative">
+                  <pre className="text-left text-xs font-mono bg-slate-950 p-5 rounded-2xl border border-slate-900 text-slate-300 overflow-auto max-h-[480px] leading-relaxed selection:bg-brand-800 selection:text-white">
+                    <code>{deepAuditPackResult.markdown}</code>
                   </pre>
                 </div>
               </div>
