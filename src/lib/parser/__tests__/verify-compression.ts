@@ -157,11 +157,11 @@ function runTests() {
   const cls = tsAnalysis.classes[0];
   assert(cls.name === 'FileTreeParser', 'Class name should be FileTreeParser');
   assert(cls.extends === 'BaseParser', 'Should detect base class BaseParser');
-  assert(cls.description?.includes('プロジェクトツリーの生成'), 'Should extract class JSDoc');
+  assert(!!cls.description?.includes('プロジェクトツリーの生成'), 'Should extract class JSDoc');
   assert(cls.methods.length === 2, 'Should find 2 methods (scanDirectory, formatNode)');
   assert(cls.methods[0].name === 'scanDirectory', 'First method is scanDirectory');
   assert(cls.methods[0].arguments.includes('handle'), 'Should find arguments');
-  assert(cls.methods[0].description?.includes('ディレクトリをスキャン'), 'Should extract method JSDoc');
+  assert(!!cls.methods[0].description?.includes('ディレクトリをスキャン'), 'Should extract method JSDoc');
 
   assert(tsAnalysis.functions.length === 2, 'Should find 2 functions in TS');
   const runParserFunc = tsAnalysis.functions.find(f => f.name === 'runParser');
@@ -182,7 +182,7 @@ function runTests() {
   const pyCls = pyAnalysis.classes[0];
   assert(pyCls.name === 'DocumentProcessor', 'Class name should be DocumentProcessor');
   assert(pyCls.extends === 'BaseProcessor', 'Should detect base class BaseProcessor');
-  assert(pyCls.description?.includes('ドキュメントの解析'), 'Should extract class Docstring');
+  assert(!!pyCls.description?.includes('ドキュメントの解析'), 'Should extract class Docstring');
   assert(pyCls.methods.length === 2, 'Should find 2 methods (__init__, process) in Python');
   assert(pyCls.methods[1].name === 'process', 'Second method is process');
   assert(pyCls.methods[1].arguments.includes('mode'), 'Should extract argument mode');
