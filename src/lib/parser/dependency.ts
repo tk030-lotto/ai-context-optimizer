@@ -4,43 +4,32 @@ export interface ResolvedDependency {
   isExternal: boolean;
 }
 
-/**
- * コメント行を除去したテキストを返します。
- * 解析の精度を向上させるために使用します。
- */
 function removeComments(content: string, fileExtension: string): string {
   const ext = fileExtension.toLowerCase();
+
   if (ext === '.py') {
-    // Pythonのコメント除去 (# と トリプルクォート)
     let cleaned = content.replace(/#.*/g, '');
     cleaned = cleaned.replace(/"""[\s\S]*?"""/g, '');
     cleaned = cleaned.replace(/'''[\s\S]*?'''/g, '');
     return cleaned;
-  } else {
-    // JS/TS系のコメント除去 (// と /* */)
-    let cleaned = content.replace(/\/\*[\s\S]*?\*\//g, '');
-    // 行コメントは行末まで置換。URL等の http:// などに影響を与えないよう、簡略化しつつ注意
-    cleaned = cleaned.replace(/\/\/.*/g, '');
-    return cleaned;
   }
+
+  let cleaned = content.replace(/\/\*[\s\S]*?\*\//g, '');
+  cleaned = cleaned.replace(/\/\/.*/g, '');
+  return cleaned;
 }
 
-/**
- * ファイルのテキストからインポートされているパスのリストを抽出します。
- */
 export function extractDependencies(fileContent: string, fileExtension: string): string[] {
   const cleanedContent = removeComments(fileContent, fileExtension);
   const dependencies = new Set<string>();
   const ext = fileExtension.toLowerCase();
 
   if (ext === '.py') {
-    // Pythonのインポート抽出は行単位で安全に処理
     const lines = cleanedContent.split(/\r?\n/);
     for (const line of lines) {
       const trimmed = line.trim();
       if (!trimmed) continue;
 
-      // 1. `import a, b, c` または `import a as b`
       if (trimmed.startsWith('import ')) {
         const importContent = trimmed.substring(7).trim();
         const parts = importContent.split(',');
@@ -50,31 +39,25 @@ export function extractDependencies(fileContent: string, fileExtension: string):
         }
       }
 
-      // 2. `from a import b`
       if (trimmed.startsWith('from ')) {
         const fromMatch = trimmed.match(/^from\s+([a-zA-Z0-9_\.]+)\s+import/);
         if (fromMatch) {
-          const name = fromMatch[1].trim();
-          if (name) dependencies.add(name);
+          dependencies.add(fromMatch[1].trim());
         }
       }
     }
   } else {
-    // JS/TSのインポート抽出
-    // 1. `import ... from 'path'` または `export ... from 'path'`
     const fromRegex = /(?:import|export)\s+(?:type\s+)?[\s\S]*?\s+from\s+['"]([^'"]+)['"]/g;
     let match;
     while ((match = fromRegex.exec(cleanedContent)) !== null) {
       dependencies.add(match[1]);
     }
 
-    // 2. `import('path')` または `require('path')`
     const callRegex = /(?:import|require)\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
     while ((match = callRegex.exec(cleanedContent)) !== null) {
       dependencies.add(match[1]);
     }
 
-    // 3. `import 'path'`
     const directImportRegex = /\bimport\s+['"]([^'"]+)['"]/g;
     while ((match = directImportRegex.exec(cleanedContent)) !== null) {
       dependencies.add(match[1]);
@@ -84,93 +67,153 @@ export function extractDependencies(fileContent: string, fileExtension: string):
   return Array.from(dependencies);
 }
 
-/**
- * 相対パスをスタックを用いて正規化します。
- * (例: "src/lib/parser" + "../config/constants" -> "src/lib/config/constants")
- */
 function normalizeRelativePath(baseDir: string, relativePath: string): string {
   const baseParts = baseDir ? baseDir.split('/') : [];
   const relParts = relativePath.split('/');
 
   for (const part of relParts) {
-    if (part === '.' || part === '') {
+    if (part === '.' || part === '') continue;
+    if (part === '..') {
+      if (baseParts.length > 0) baseParts.pop();
       continue;
     }
-    if (part === '..') {
-      if (baseParts.length > 0) {
-        baseParts.pop();
-      }
-    } else {
-      baseParts.push(part);
-    }
+    baseParts.push(part);
   }
 
   return baseParts.join('/');
 }
 
-/**
- * インポートパスからプロジェクト内の実ファイルを解決します。
- * 
- * @param sourceFilePath 解析対象ファイルのプロジェクトルートからの相対パス (例: "src/lib/parser/file-tree.ts")
- * @param importPath 抽出されたインポートパス (例: "../config/constants" または "react")
- * @param allProjectFiles プロジェクト内の全ファイルの相対パス一覧
- */
+function buildPathCandidates(importPath: string, sourceFilePath: string): string[] {
+  const normalizedImport = importPath.replace(/\\/g, '/');
+  const candidates = new Set<string>();
+  candidates.add(normalizedImport);
+
+  if (normalizedImport.startsWith('@/')) {
+    candidates.add(`src/${normalizedImport.slice(2)}`);
+  }
+
+  if (normalizedImport.startsWith('~/')) {
+    candidates.add(normalizedImport.slice(2));
+  }
+
+  // Python relative imports such as `.utils` or `..core.helpers`
+  if (normalizedImport.startsWith('.') && !normalizedImport.startsWith('./') && !normalizedImport.startsWith('../')) {
+    const leadingDots = normalizedImport.match(/^\.+/)?.[0].length || 0;
+    const modulePath = normalizedImport.slice(leadingDots).replace(/^\//, '').replace(/\./g, '/');
+    const lastSlashIndex = sourceFilePath.lastIndexOf('/');
+    const baseDir = lastSlashIndex !== -1 ? sourceFilePath.substring(0, lastSlashIndex) : '';
+
+    let relativeBase = baseDir;
+    for (let i = 1; i < leadingDots; i++) {
+      const slashIndex = relativeBase.lastIndexOf('/');
+      relativeBase = slashIndex !== -1 ? relativeBase.substring(0, slashIndex) : '';
+    }
+
+    candidates.add(modulePath ? normalizeRelativePath(relativeBase, modulePath) : relativeBase);
+    return Array.from(candidates).filter(Boolean);
+  }
+
+  // Python-style dotted imports such as `package.module`
+  if (normalizedImport.includes('.') && !normalizedImport.startsWith('./') && !normalizedImport.startsWith('../')) {
+    candidates.add(normalizedImport.replace(/\./g, '/'));
+  }
+
+  return Array.from(candidates).filter(Boolean);
+}
+
+function resolveAgainstProjectFiles(candidate: string, allProjectFiles: string[]): string | undefined {
+  const trimmedCandidate = candidate.replace(/\\/g, '/').replace(/^\/+/, '').replace(/\/+$/, '');
+  if (!trimmedCandidate) return undefined;
+
+  const extensions = ['.ts', '.tsx', '.js', '.jsx', '.d.ts', '.py', '.css', '.json'];
+  const roots = new Set([
+    trimmedCandidate,
+    trimmedCandidate.replace(/\./g, '/')
+  ]);
+
+  for (const root of roots) {
+    const variants = [root, `${root}/index`, `${root}/__init__`];
+
+    for (const variant of variants) {
+      if (allProjectFiles.includes(variant)) {
+        return variant;
+      }
+
+      for (const ext of extensions) {
+        const withExt = `${variant}${ext}`;
+        if (allProjectFiles.includes(withExt)) {
+          return withExt;
+        }
+      }
+    }
+
+    for (const file of allProjectFiles) {
+      if (file === root || file.endsWith(`/${root}`)) {
+        return file;
+      }
+
+      for (const ext of extensions) {
+        if (file === `${root}${ext}` || file.endsWith(`/${root}${ext}`)) {
+          return file;
+        }
+        if (file === `${root}/index${ext}` || file.endsWith(`/${root}/index${ext}`)) {
+          return file;
+        }
+        if (file === `${root}/__init__${ext}` || file.endsWith(`/${root}/__init__${ext}`)) {
+          return file;
+        }
+      }
+    }
+  }
+
+  return undefined;
+}
+
 export function resolveDependencyPath(
   sourceFilePath: string,
   importPath: string,
   allProjectFiles: string[]
 ): ResolvedDependency {
-  const isRelative = importPath.startsWith('.') || importPath.startsWith('/');
-  
-  if (!isRelative) {
+  const normalizedImport = importPath.replace(/\\/g, '/');
+  const isJsRelative = normalizedImport.startsWith('./') || normalizedImport.startsWith('../') || normalizedImport.startsWith('/');
+  const isPythonRelative = normalizedImport.startsWith('.') && !isJsRelative;
+  const candidatePaths = new Set(buildPathCandidates(normalizedImport, sourceFilePath));
+
+  if (isJsRelative) {
+    const lastSlashIndex = sourceFilePath.lastIndexOf('/');
+    const baseDir = lastSlashIndex !== -1 ? sourceFilePath.substring(0, lastSlashIndex) : '';
+    candidatePaths.add(normalizeRelativePath(baseDir, normalizedImport));
+  }
+
+  if (!isJsRelative && !isPythonRelative) {
+    for (const candidate of candidatePaths) {
+      const resolved = resolveAgainstProjectFiles(candidate, allProjectFiles);
+      if (resolved) {
+        return {
+          importPath,
+          resolvedPath: resolved,
+          isExternal: false
+        };
+      }
+    }
+
     return {
       importPath,
       isExternal: true
     };
   }
 
-  // 1. ソースファイルのディレクトリを取得
-  const lastSlashIndex = sourceFilePath.lastIndexOf('/');
-  const baseDir = lastSlashIndex !== -1 ? sourceFilePath.substring(0, lastSlashIndex) : '';
-
-  // 2. パスを解決・正規化
-  const resolvedBase = normalizeRelativePath(baseDir, importPath);
-
-  // 3. 拡張子候補を当てはめて実在確認
-  // JS/TS/Python/CSS 等の一般的なファイル拡張子を探索
-  const extensions = [
-    // JS/TS
-    '.ts', '.tsx', '.js', '.jsx', '.d.ts',
-    // ディレクトリインポート (Node/Vite等)
-    '/index.ts', '/index.tsx', '/index.js', '/index.jsx',
-    // Python
-    '.py', '/__init__.py',
-    // CSS/その他
-    '.css', '.json'
-  ];
-
-  // 完全一致する場合 (すでに拡張子が含まれているインポート)
-  if (allProjectFiles.includes(resolvedBase)) {
-    return {
-      importPath,
-      resolvedPath: resolvedBase,
-      isExternal: false
-    };
-  }
-
-  // 拡張子を補完して検索
-  for (const ext of extensions) {
-    const checkPath = resolvedBase + ext;
-    if (allProjectFiles.includes(checkPath)) {
+  for (const candidate of candidatePaths) {
+    const resolved = resolveAgainstProjectFiles(candidate, allProjectFiles);
+    if (resolved) {
       return {
         importPath,
-        resolvedPath: checkPath,
+        resolvedPath: resolved,
         isExternal: false
       };
     }
   }
 
-  // 解決できなかったが、相対パスなので外部ではない
   return {
     importPath,
     resolvedPath: undefined,

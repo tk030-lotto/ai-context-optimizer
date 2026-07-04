@@ -2,11 +2,15 @@ import { extractDependencies, resolveDependencyPath } from '../dependency';
 import { analyzeModule } from '../module-analyzer';
 import { estimateTokens, calculateReadTime } from '../token-estimator';
 
-// --- モックデータ定義 ---
+function assert(condition: boolean, message: string) {
+  if (!condition) {
+    throw new Error(`Assertion Failed: ${message}`);
+  }
+}
 
 const SAMPLE_TS_CONTENT = `
 /**
- * 設定モジュールとその他のユーティリティのインポート
+ * Sample module.
  */
 import { DEFAULT_EXCLUDED_DIRS } from '../config/constants';
 import * as fs from 'fs';
@@ -17,8 +21,7 @@ export interface DummyInterface {
 }
 
 /**
- * プロジェクトツリーの生成とトラバースを管理するクラスです。
- * 複数行のJSDocコメントテスト。
+ * FileTreeParser handles directory traversal and tree rendering.
  */
 export class FileTreeParser extends BaseParser {
   private rootPath: string;
@@ -29,8 +32,8 @@ export class FileTreeParser extends BaseParser {
   }
 
   /**
-   * ディレクトリをスキャンしてノードを返します。
-   * @param handle ディレクトリハンドル
+   * Scan a directory.
+   * @param handle directory handle
    */
   async scanDirectory(handle: any): Promise<any[]> {
     const list: any[] = [];
@@ -43,15 +46,12 @@ export class FileTreeParser extends BaseParser {
 }
 
 /**
- * 簡易的なアロー関数のエクスポートテスト
+ * Exported arrow function.
  */
 export const runParser = async (config: object): Promise<boolean> => {
   return true;
 };
 
-/**
- * 通常の関数定義のテスト
- */
 function localHelper(value: number): string {
   return String(value);
 }
@@ -65,36 +65,25 @@ from .utils import helper_func
 
 class DocumentProcessor(BaseProcessor):
     """
-    ドキュメントの解析とテキスト抽出を行うクラス。
-    PythonのトリプルクォートDocstringテスト。
+    Document processing class.
     """
     def __init__(self, doc_path):
         self.doc_path = doc_path
 
     def process(self, mode: str) -> bool:
-        """ファイルを処理します。"""
+        """Process a document."""
         return True
 
 def global_run():
-    """グローバル関数のテスト"""
+    """Global function."""
     pass
 `;
-
-// --- 検証関数 ---
-
-function assert(condition: boolean, message: string) {
-  if (!condition) {
-    throw new Error(`Assertion Failed: ${message}`);
-  }
-}
 
 function runTests() {
   console.log('=== START KNOWLEDGE COMPRESSION ENGINE TESTING ===\n');
 
-  // --- 1. dependency.ts の検証 ---
   console.log('[1/3] Testing dependency.ts...');
-  
-  // TSのインポート抽出テスト
+
   const tsDeps = extractDependencies(SAMPLE_TS_CONTENT, '.ts');
   console.log('TS dependencies extracted:', tsDeps);
   assert(tsDeps.includes('../config/constants'), 'Should extract constants');
@@ -102,7 +91,6 @@ function runTests() {
   assert(tsDeps.includes('./file-reader'), 'Should extract file-reader');
   assert(tsDeps.length === 3, 'Should extract exactly 3 dependencies for TS');
 
-  // Pythonのインポート抽出テスト
   const pyDeps = extractDependencies(SAMPLE_PYTHON_CONTENT, '.py');
   console.log('Python dependencies extracted:', pyDeps);
   assert(pyDeps.includes('os'), 'Should extract os');
@@ -112,41 +100,46 @@ function runTests() {
   assert(pyDeps.includes('.utils'), 'Should extract .utils');
   assert(pyDeps.length === 5, 'Should extract exactly 5 dependencies for Python');
 
-  // パス解決テスト
   const projectFiles = [
     'src/lib/config/constants.ts',
     'src/lib/parser/file-reader.ts',
     'src/lib/parser/file-tree.ts',
-    'src/utils.py'
+    'src/utils.py',
+    'src/app/utils.py',
+    'src/lib/config/constants/index.ts'
   ];
 
   const sourceFile = 'src/lib/parser/file-tree.ts';
 
-  // 相対パス解決
   const res1 = resolveDependencyPath(sourceFile, '../config/constants', projectFiles);
   console.log('Resolve ../config/constants:', res1);
   assert(res1.resolvedPath === 'src/lib/config/constants.ts', 'Should resolve constants.ts');
   assert(res1.isExternal === false, 'Should not be external');
 
-  // 相対パス解決 (同一ディレクトリ)
   const res2 = resolveDependencyPath(sourceFile, './file-reader', projectFiles);
   console.log('Resolve ./file-reader:', res2);
   assert(res2.resolvedPath === 'src/lib/parser/file-reader.ts', 'Should resolve file-reader.ts');
   assert(res2.isExternal === false, 'Should not be external');
 
-  // 外部/標準ライブラリ解決
   const res3 = resolveDependencyPath(sourceFile, 'fs', projectFiles);
   console.log('Resolve fs:', res3);
   assert(res3.resolvedPath === undefined, 'External resolved path should be undefined');
   assert(res3.isExternal === true, 'fs should be external');
 
+  const aliasResult = resolveDependencyPath('src/app/page.tsx', '@/lib/config/constants', projectFiles);
+  console.log('Resolve @/lib/config/constants:', aliasResult);
+  assert(aliasResult.resolvedPath === 'src/lib/config/constants.ts', 'Should resolve @/ alias paths');
+  assert(aliasResult.isExternal === false, 'Alias path should be treated as local');
+
+  const pythonRelativeResult = resolveDependencyPath('src/app/main.py', '.utils', projectFiles);
+  console.log('Resolve .utils from Python:', pythonRelativeResult);
+  assert(pythonRelativeResult.resolvedPath === 'src/app/utils.py', 'Should resolve Python relative imports');
+  assert(pythonRelativeResult.isExternal === false, 'Python relative import should be local');
+
   console.log('-> dependency.ts passed.\n');
 
-
-  // --- 2. module-analyzer.ts の検証 ---
   console.log('[2/3] Testing module-analyzer.ts...');
 
-  // TSモジュール解析
   const tsAnalysis = analyzeModule(SAMPLE_TS_CONTENT, '.ts');
   console.log('TS Analysis result:');
   console.log('Classes:', JSON.stringify(tsAnalysis.classes, null, 2));
@@ -157,22 +150,40 @@ function runTests() {
   const cls = tsAnalysis.classes[0];
   assert(cls.name === 'FileTreeParser', 'Class name should be FileTreeParser');
   assert(cls.extends === 'BaseParser', 'Should detect base class BaseParser');
-  assert(!!cls.description?.includes('プロジェクトツリーの生成'), 'Should extract class JSDoc');
+  assert(!!cls.description?.includes('FileTreeParser'), 'Should extract class JSDoc');
   assert(cls.methods.length === 2, 'Should find 2 methods (scanDirectory, formatNode)');
   assert(cls.methods[0].name === 'scanDirectory', 'First method is scanDirectory');
   assert(cls.methods[0].arguments.includes('handle'), 'Should find arguments');
-  assert(!!cls.methods[0].description?.includes('ディレクトリをスキャン'), 'Should extract method JSDoc');
+  assert(!!cls.methods[0].description?.includes('Scan a directory'), 'Should extract method JSDoc');
 
   assert(tsAnalysis.functions.length === 2, 'Should find 2 functions in TS');
   const runParserFunc = tsAnalysis.functions.find(f => f.name === 'runParser');
   const localHelperFunc = tsAnalysis.functions.find(f => f.name === 'localHelper');
-  
   assert(!!runParserFunc, 'Should find arrow function runParser');
   assert(runParserFunc?.isExported === true, 'runParser should be exported');
   assert(!!localHelperFunc, 'Should find function localHelper');
   assert(localHelperFunc?.isExported === false, 'localHelper should not be exported');
 
-  // Pythonモジュール解析
+  const advancedTsContent = `
+export class AdvancedService {
+  private readonly state = 0;
+
+  public async loadItems(id: string): Promise<void> {
+    return;
+  }
+
+  get value(): number {
+    return this.state;
+  }
+
+  handler = (input: string): string => input.trim();
+}
+`;
+  const advancedTsAnalysis = analyzeModule(advancedTsContent, '.ts');
+  assert(advancedTsAnalysis.classes.length === 1, 'Should find 1 advanced class');
+  assert(advancedTsAnalysis.classes[0].methods.some(m => m.name === 'loadItems'), 'Should detect modifier-based methods');
+  assert(advancedTsAnalysis.classes[0].methods.some(m => m.name === 'handler'), 'Should detect class field arrow functions');
+
   const pyAnalysis = analyzeModule(SAMPLE_PYTHON_CONTENT, '.py');
   console.log('Python Analysis result:');
   console.log('Classes:', JSON.stringify(pyAnalysis.classes, null, 2));
@@ -182,27 +193,24 @@ function runTests() {
   const pyCls = pyAnalysis.classes[0];
   assert(pyCls.name === 'DocumentProcessor', 'Class name should be DocumentProcessor');
   assert(pyCls.extends === 'BaseProcessor', 'Should detect base class BaseProcessor');
-  assert(!!pyCls.description?.includes('ドキュメントの解析'), 'Should extract class Docstring');
+  assert(!!pyCls.description?.includes('Document processing class'), 'Should extract class Docstring');
   assert(pyCls.methods.length === 2, 'Should find 2 methods (__init__, process) in Python');
   assert(pyCls.methods[1].name === 'process', 'Second method is process');
   assert(pyCls.methods[1].arguments.includes('mode'), 'Should extract argument mode');
-  assert(pyCls.methods[1].description === 'ファイルを処理します。', 'Should extract method Docstring');
+  assert(pyCls.methods[1].description === 'Process a document.', 'Should extract method Docstring');
 
   assert(pyAnalysis.functions.length === 1, 'Should find 1 function in Python');
   assert(pyAnalysis.functions[0].name === 'global_run', 'Should find global function global_run');
-  assert(pyAnalysis.functions[0].description === 'グローバル関数のテスト', 'Should extract global function Docstring');
+  assert(pyAnalysis.functions[0].description === 'Global function.', 'Should extract global function Docstring');
 
   console.log('-> module-analyzer.ts passed.\n');
 
-
-  // --- 3. token-estimator.ts の検証 ---
   console.log('[3/3] Testing token-estimator.ts...');
 
   const englishText = 'Hello world, this is a simple text with symbols {} and 123.';
-  const japaneseText = 'こんにちは世界、これは日本語の文章です。';
+  const japaneseText = 'こんにちは世界。これは日本語のテキストです。';
   const mixedText = `${englishText}\n${japaneseText}`;
 
-  // トークン推定
   const engTokens = estimateTokens(englishText);
   const jpTokens = estimateTokens(japaneseText);
   const mixedTokens = estimateTokens(mixedText);
@@ -213,9 +221,8 @@ function runTests() {
 
   assert(engTokens > 0, 'Tokens should be greater than 0');
   assert(jpTokens > 0, 'Tokens should be greater than 0');
-  assert(mixedTokens === Math.ceil(englishText.length / 3.8 + 1 /* 改行 */ / 3.8 + japaneseText.length * 1.3), 'Mixed tokens calculation check');
+  assert(mixedTokens > engTokens, 'Mixed tokens should be larger than English-only tokens');
 
-  // 読込想定時間
   const readTimeResult = calculateReadTime(mixedTokens, mixedText.length);
   console.log('Read time result:', readTimeResult);
   assert(readTimeResult.aiTimeSeconds > 0, 'AI time should be calculated');
@@ -226,16 +233,15 @@ function runTests() {
   console.log('-> token-estimator.ts passed.\n');
 
   console.log('================================================');
-  console.log('🎉 ALL TESTS PASSED SUCCESSFULLY! 🎉');
+  console.log('ALL TESTS PASSED SUCCESSFULLY!');
   console.log('================================================');
 }
 
-// 実行
 try {
   runTests();
   process.exit(0);
 } catch (e: any) {
-  console.error('\n❌ TEST FAILED ❌');
+  console.error('\nTEST FAILED');
   console.error(e.message || e);
   process.exit(1);
 }

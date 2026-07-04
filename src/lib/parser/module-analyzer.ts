@@ -20,32 +20,22 @@ export interface ModuleAnalysisResult {
   exports: string[];
 }
 
-/**
- * JS/TSコード内の定義の直前のJSDocコメントを取得します。
- */
 function getJsDocDescription(content: string, index: number): string | undefined {
-  // 定義のインデックスから手前を探索
   const beforeText = content.substring(0, index);
   const trimmed = beforeText.trimEnd();
-  
-  // */ で終わっているかチェック
+
   if (!trimmed.endsWith('*/')) {
     return undefined;
   }
 
-  // /** を探す
   const lastDocStart = trimmed.lastIndexOf('/**');
   if (lastDocStart === -1) {
     return undefined;
   }
 
-  // /** から */ までの間に関係ない文字（他のコードなど）が含まれていないかチェック
   const docComment = trimmed.substring(lastDocStart);
-  // 他のコードブロックの閉じ括弧などが含まれる場合はJSDocではない
   if (docComment.includes('}') || docComment.includes(';')) {
-    // 簡易的に判定。厳密ではないが実用上十分
     const lines = docComment.split('\n');
-    // すべての行がコメント記号で始まっているか
     const isClean = lines.every((line, idx) => {
       const l = line.trim();
       return idx === 0 ? l.startsWith('/**') : (l.startsWith('*') || l.startsWith('*/'));
@@ -53,22 +43,17 @@ function getJsDocDescription(content: string, index: number): string | undefined
     if (!isClean) return undefined;
   }
 
-  // 内容をクリーンアップ
   return docComment
-    .replace(/^\/\*\*|\*\/$/g, '') // 開始・終了タグの除去
+    .replace(/^\/\*\*|\*\/$/g, '')
     .split('\n')
-    .map(line => line.trim().replace(/^\*\s*/, '')) // 行頭の * と空白を除去
-    .filter(line => line.length > 0 && !line.startsWith('@')) // タグ (@param 等) は除外
+    .map(line => line.trim().replace(/^\*\s*/, ''))
+    .filter(line => line.length > 0 && !line.startsWith('@'))
     .join('\n')
     .trim();
 }
 
-/**
- * Pythonコード内のクラス・関数の定義直後のDocstringを取得します。
- */
 function getPythonDocstring(lines: string[], startLineIndex: number): string | undefined {
   let currentIdx = startLineIndex + 1;
-  // 空行をスキップ
   while (currentIdx < lines.length && lines[currentIdx].trim() === '') {
     currentIdx++;
   }
@@ -82,14 +67,11 @@ function getPythonDocstring(lines: string[], startLineIndex: number): string | u
 
   if (!quoteChar) return undefined;
 
-  // 1行で完結している場合
   if (line.endsWith(quoteChar) && line.length > quoteChar.length * 2) {
     return line.substring(quoteChar.length, line.length - quoteChar.length).trim();
   }
 
-  // 複数行にわたる場合
   const docLines: string[] = [];
-  // 最初の行のクォート以降を取得
   const firstLineContent = line.substring(quoteChar.length).trim();
   if (firstLineContent) docLines.push(firstLineContent);
 
@@ -108,9 +90,6 @@ function getPythonDocstring(lines: string[], startLineIndex: number): string | u
   return docLines.join('\n').trim();
 }
 
-/**
- * JS/TSにおけるクラスの中身（波括弧 { } の範囲）を抽出します。
- */
 function extractJsClassBody(content: string, classIndex: number): { body: string; endIndex: number } | null {
   const classStartIndex = content.indexOf('{', classIndex);
   if (classStartIndex === -1) return null;
@@ -138,17 +117,21 @@ function extractJsClassBody(content: string, classIndex: number): { body: string
   return null;
 }
 
-/**
- * JS/TS用のモジュール解析
- */
+function splitParameters(paramText: string): string[] {
+  if (!paramText.trim()) return [];
+  return paramText
+    .split(',')
+    .map(a => a.trim().split(':')[0].trim())
+    .filter(Boolean);
+}
+
 function analyzeJsTsModule(content: string): ModuleAnalysisResult {
   const classes: ClassInfo[] = [];
   const functions: FunctionInfo[] = [];
   const exports: string[] = [];
 
-  // エクスポートシンボルの抽出 (例: export { foo, bar })
   const namedExportsRegex = /export\s+\{\s*([a-zA-Z0-9_,\s]+)\s*\}/g;
-  let match;
+  let match: RegExpExecArray | null;
   while ((match = namedExportsRegex.exec(content)) !== null) {
     const symbols = match[1].split(',').map(s => s.trim());
     for (const sym of symbols) {
@@ -156,11 +139,7 @@ function analyzeJsTsModule(content: string): ModuleAnalysisResult {
     }
   }
 
-  // 1. クラス定義の解析
-  // export または export default に対応
   const classRegex = /(?:export\s+(?:default\s+)?)?class\s+([a-zA-Z0-9_]+)(?:\s+extends\s+([a-zA-Z0-9_<>\.,\s]+))?/g;
-  const processedClassIndexes: number[] = [];
-
   while ((match = classRegex.exec(content)) !== null) {
     const className = match[1];
     const extendsClass = match[2]?.trim();
@@ -175,27 +154,36 @@ function analyzeJsTsModule(content: string): ModuleAnalysisResult {
     const bodyInfo = extractJsClassBody(content, classIndex);
 
     const methods: FunctionInfo[] = [];
-    if (bodyInfo) {
-      processedClassIndexes.push(classIndex);
-      // クラスボディ内のメソッド抽出
-      const methodRegex = /(?:async\s+)?([a-zA-Z0-9_]+)\s*\(([^)]*)\)(?:\s*:\s*([^{]+))?\s*\{/g;
-      let methodMatch;
-      while ((methodMatch = methodRegex.exec(bodyInfo.body)) !== null) {
-        const methodName = methodMatch[1];
-        // constructor やゲッターセッター風のものはメソッドから除外するか
-        if (methodName === 'constructor') continue;
+    const seenMethods = new Set<string>();
 
-        const args = methodMatch[2].split(',').map(a => a.trim().split(':')[0].trim()).filter(Boolean);
-        const retType = methodMatch[3]?.trim();
-        
-        // メソッドのJSDoc抽出
-        const methodDoc = getJsDocDescription(bodyInfo.body, methodMatch.index);
+    if (bodyInfo) {
+      const methodRegex = /(?:^|\n)\s*(?:(?:public|private|protected|static|readonly|abstract|override|async)\s+)*(?:(get|set)\s+)?([a-zA-Z0-9_]+)\s*\(([^)]*)\)\s*(?:\:\s*([^{=]+))?\s*\{/g;
+      let methodMatch: RegExpExecArray | null;
+      while ((methodMatch = methodRegex.exec(bodyInfo.body)) !== null) {
+        const methodName = methodMatch[2];
+        if (methodName === 'constructor' || seenMethods.has(methodName)) continue;
+        seenMethods.add(methodName);
 
         methods.push({
           name: methodName,
-          arguments: args,
-          returnType: retType,
-          description: methodDoc
+          arguments: splitParameters(methodMatch[3]),
+          returnType: methodMatch[4]?.trim(),
+          description: getJsDocDescription(bodyInfo.body, methodMatch.index)
+        });
+      }
+
+      const fieldArrowRegex = /(?:^|\n)\s*(?:(?:public|private|protected|static|readonly|override)\s+)*([a-zA-Z0-9_]+)\s*=\s*(?:async\s*)?\(([^)]*)\)\s*(?:\:\s*([^=;{]+))?\s*=>/g;
+      let fieldMatch: RegExpExecArray | null;
+      while ((fieldMatch = fieldArrowRegex.exec(bodyInfo.body)) !== null) {
+        const methodName = fieldMatch[1];
+        if (seenMethods.has(methodName)) continue;
+        seenMethods.add(methodName);
+
+        methods.push({
+          name: methodName,
+          arguments: splitParameters(fieldMatch[2]),
+          returnType: fieldMatch[3]?.trim(),
+          description: getJsDocDescription(bodyInfo.body, fieldMatch.index)
         });
       }
     }
@@ -209,12 +197,11 @@ function analyzeJsTsModule(content: string): ModuleAnalysisResult {
     });
   }
 
-  // 2. 関数定義の解析 (通常の function キーワード)
   const funcRegex = /(?:export\s+(?:default\s+)?)?(?:async\s+)?function\s+([a-zA-Z0-9_]+)\s*\(([^)]*)\)(?:\s*:\s*([^{]+))?/g;
   while ((match = funcRegex.exec(content)) !== null) {
     const funcName = match[1];
     const isExported = match[0].startsWith('export');
-    const args = match[2].split(',').map(a => a.trim().split(':')[0].trim()).filter(Boolean);
+    const args = splitParameters(match[2]);
     const retType = match[3]?.trim();
     const jsdoc = getJsDocDescription(content, match.index);
 
@@ -231,12 +218,11 @@ function analyzeJsTsModule(content: string): ModuleAnalysisResult {
     });
   }
 
-  // 3. アロー関数の解析 (定数として export されるもの)
-  const arrowRegex = /(?:export\s+)?const\s+([a-zA-Z0-9_]+)\s*=\s*(?:async\s*)?\(([^)]*)\)(?:\s*:\s*([^=]+))?\s*=>/g;
+  const arrowRegex = /(?:export\s+)?(?:const|let|var)\s+([a-zA-Z0-9_]+)\s*(?::\s*[^=]+)?=\s*(?:async\s*)?\(([^)]*)\)\s*(?:\:\s*([^=]+))?\s*=>/g;
   while ((match = arrowRegex.exec(content)) !== null) {
     const funcName = match[1];
     const isExported = match[0].startsWith('export');
-    const args = match[2].split(',').map(a => a.trim().split(':')[0].trim()).filter(Boolean);
+    const args = splitParameters(match[2]);
     const retType = match[3]?.trim();
     const jsdoc = getJsDocDescription(content, match.index);
 
@@ -260,9 +246,6 @@ function analyzeJsTsModule(content: string): ModuleAnalysisResult {
   };
 }
 
-/**
- * Python用のモジュール解析
- */
 function analyzePythonModule(content: string): ModuleAnalysisResult {
   const classes: ClassInfo[] = [];
   const functions: FunctionInfo[] = [];
@@ -270,7 +253,6 @@ function analyzePythonModule(content: string): ModuleAnalysisResult {
 
   const lines = content.split('\n');
 
-  // インデントの深さを測る
   const getIndent = (line: string): number => {
     const match = line.match(/^(\s*)/);
     return match ? match[1].length : 0;
@@ -280,7 +262,6 @@ function analyzePythonModule(content: string): ModuleAnalysisResult {
     const line = lines[i];
     const trimmed = line.trim();
 
-    // 1. クラス定義の検出
     if (trimmed.startsWith('class ')) {
       const classMatch = trimmed.match(/^class\s+([a-zA-Z0-9_]+)(?:\(([^)]+)\))?:/);
       if (classMatch) {
@@ -291,35 +272,27 @@ function analyzePythonModule(content: string): ModuleAnalysisResult {
 
         exports.push(className);
 
-        // クラスボディ内のメソッド抽出
         const methods: FunctionInfo[] = [];
         let j = i + 1;
-        
+
         while (j < lines.length) {
           const nextLine = lines[j];
           const nextTrimmed = nextLine.trim();
 
-          // 空行はスキップ
           if (nextTrimmed === '') {
             j++;
             continue;
           }
 
-          // インデントがクラス定義以下になったらクラススコープ終了
           if (getIndent(nextLine) <= classIndent) {
             break;
           }
 
-          // メソッド定義の検出
           if (nextTrimmed.startsWith('def ')) {
             const methodMatch = nextTrimmed.match(/^def\s+([a-zA-Z0-9_]+)\s*\(([^)]*)\)(?:\s*->\s*([^:]+))?:/);
             if (methodMatch) {
               const methodName = methodMatch[1];
-              // self 等を除いた引数リスト
-              const args = methodMatch[2]
-                .split(',')
-                .map(a => a.trim().split(':')[0].trim())
-                .filter(a => a && a !== 'self' && a !== 'cls');
+              const args = splitParameters(methodMatch[2]).filter(a => a !== 'self' && a !== 'cls');
               const retType = methodMatch[3]?.trim();
               const methodDoc = getPythonDocstring(lines, j);
 
@@ -331,6 +304,7 @@ function analyzePythonModule(content: string): ModuleAnalysisResult {
               });
             }
           }
+
           j++;
         }
 
@@ -339,22 +313,16 @@ function analyzePythonModule(content: string): ModuleAnalysisResult {
           extends: baseClass,
           description: docstring,
           methods,
-          isExported: true // Pythonは基本的にモジュールレベルはすべて公開
+          isExported: true
         });
-        
-        // クラスの末尾までインデックスを進める (j-1 まで処理済み)
+
         i = j - 1;
       }
-    }
-    // 2. モジュールレベルの関数定義の検出
-    else if (trimmed.startsWith('def ')) {
+    } else if (trimmed.startsWith('def ')) {
       const funcMatch = trimmed.match(/^def\s+([a-zA-Z0-9_]+)\s*\(([^)]*)\)(?:\s*->\s*([^:]+))?:/);
       if (funcMatch) {
         const funcName = funcMatch[1];
-        const args = funcMatch[2]
-          .split(',')
-          .map(a => a.trim().split(':')[0].trim())
-          .filter(Boolean);
+        const args = splitParameters(funcMatch[2]);
         const retType = funcMatch[3]?.trim();
         const docstring = getPythonDocstring(lines, i);
 
@@ -378,21 +346,17 @@ function analyzePythonModule(content: string): ModuleAnalysisResult {
   };
 }
 
-/**
- * ファイルの拡張子に基づいて、関数名、クラス名、API仕様を解析・抽出します。
- * 
- * @param fileContent ファイルのテキストコンテンツ
- * @param fileExtension ファイルの拡張子 (.ts, .js, .py 等)
- */
 export function analyzeModule(fileContent: string, fileExtension: string): ModuleAnalysisResult {
   const ext = fileExtension.toLowerCase();
+
   if (ext === '.py') {
     return analyzePythonModule(fileContent);
-  } else if (['.ts', '.tsx', '.js', '.jsx'].includes(ext)) {
+  }
+
+  if (['.ts', '.tsx', '.js', '.jsx'].includes(ext)) {
     return analyzeJsTsModule(fileContent);
   }
-  
-  // 未対応のファイル形式は空の解析結果を返す
+
   return {
     classes: [],
     functions: [],
