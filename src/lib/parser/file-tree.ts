@@ -1,5 +1,10 @@
 import { DEFAULT_EXCLUDED_DIRS, DEFAULT_EXCLUDED_EXTS } from '../config/constants';
 
+// FileSystemDirectoryHandle.values() は TypeScript 標準 lib 未定義のため型補完
+interface FileSystemDirectoryHandleIterable extends FileSystemDirectoryHandle {
+  values(): AsyncIterableIterator<FileSystemFileHandle | FileSystemDirectoryHandle>;
+}
+
 export interface FileNode {
   name: string;
   path: string; // Relative path from the root
@@ -31,7 +36,7 @@ export async function traverseDirectory(
 
   const nodes: FileNode[] = [];
 
-  for await (const entry of (dirHandle as any).values()) {
+  for await (const entry of (dirHandle as FileSystemDirectoryHandleIterable).values()) {
     const relativePath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
 
     if (entry.kind === 'directory') {

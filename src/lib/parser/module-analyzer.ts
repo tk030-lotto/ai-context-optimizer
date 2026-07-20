@@ -117,12 +117,32 @@ function extractJsClassBody(content: string, classIndex: number): { body: string
   return null;
 }
 
+/**
+ * 引数リスト文字列をカンマで分割する。
+ * ジェネリック型 `<K, V>` の内側のカンマは分割しない（山括弧の深さを追跡）。
+ */
 function splitParameters(paramText: string): string[] {
   if (!paramText.trim()) return [];
-  return paramText
-    .split(',')
-    .map(a => a.trim().split(':')[0].trim())
-    .filter(Boolean);
+  const params: string[] = [];
+  let depth = 0;
+  let current = '';
+
+  for (const ch of paramText) {
+    if (ch === '<') { depth++; current += ch; }
+    else if (ch === '>') { depth--; current += ch; }
+    else if (ch === ',' && depth === 0) {
+      const name = current.trim().split(':')[0].trim();
+      if (name) params.push(name);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  // 末尾の最後の引数
+  const lastName = current.trim().split(':')[0].trim();
+  if (lastName) params.push(lastName);
+
+  return params.filter(Boolean);
 }
 
 function analyzeJsTsModule(content: string): ModuleAnalysisResult {

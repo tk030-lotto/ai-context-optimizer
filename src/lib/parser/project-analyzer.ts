@@ -7,11 +7,14 @@ import { ProjectAnalysisData, FileAnalysisInfo } from './types';
 
 /**
  * プロジェクトノードツリー全体を解析し、依存関係やモジュール構造を統合した解析データを構築します。
+ * 
+ * @param onProgress 進捗コールバック。引数は (処理済みファイル数, 総ファイル数)。
  */
 export async function analyzeProject(
   projectName: string,
   rootNodes: FileNode[],
-  folderStructureText: string
+  folderStructureText: string,
+  onProgress?: (processed: number, total: number) => void
 ): Promise<ProjectAnalysisData> {
   // 1. すべてのファイルを平滑化（flatten）
   const allFileNodes: FileNode[] = [];
@@ -33,13 +36,15 @@ export async function analyzeProject(
 
   // プロジェクト内の全ファイルの相対パス一覧 (依存関係解決に利用)
   const allProjectPaths = readableNodes.map(node => node.path);
+  const totalFiles = readableNodes.length;
 
   // 3. 各ファイルの解析を非同期で実行
   const fileAnalyses: FileAnalysisInfo[] = [];
   let totalBytes = 0;
   let totalTokens = 0;
 
-  for (const node of readableNodes) {
+  for (let i = 0; i < readableNodes.length; i++) {
+    const node = readableNodes[i];
     try {
       const fileHandle = node.handle as FileSystemFileHandle;
       const content = await readFileContent(fileHandle);
@@ -80,6 +85,11 @@ export async function analyzeProject(
         tokens: 0,
         dependencies: []
       });
+    }
+
+    // 進捗コールバックを呼び出す
+    if (onProgress) {
+      onProgress(i + 1, totalFiles);
     }
   }
 

@@ -10,34 +10,63 @@ const VIOLATING_KEYWORDS = [
   /navigator\.sendBeacon/
 ];
 
-// Regexp to catch any http:// or https:// but ignore standard localhosts and data URIs
-const URL_PATTERN = /https?:\/\/(?!(localhost|127\.0\.0\.1|::1)\b)[a-zA-Z0-9-._~:/?#\[\]@!$&'()*+,;=%]+/g;
-
 // List of allowed files or patterns (if any)
 const ALLOWED_EXCEPTIONS = [];
+
+/**
+ * 外部URLを検出する正規表現。グローバルフラグ付きのため、
+ * ファイルごとに新しいインスタンスを生成して lastIndex 蓄積バグを防止する。
+ */
+function createUrlPattern() {
+  return /https?:\/\/(?!(localhost|127\.0\.0\.1|::1)\b)[a-zA-Z0-9-._~:/?#\[\]@!$&'()*+,;=%]+/g;
+}
+
+/**
+ * HTML固有の外部リソース参照パターン (src=, href=, url() など)
+ * スクリプトやスタイルシートの外部読み込みを検出する。
+ */
+const HTML_EXTERNAL_RESOURCE_PATTERNS = [
+  /(?:src|href|action)\s*=\s*["']https?:\/\/(?!(localhost|127\.0\.0\.1))[^"']+["']/,
+  /url\s*\(\s*["']?https?:\/\/(?!(localhost|127\.0\.0\.1))[^"')]+["']?\s*\)/,
+];
 
 function checkFile(filePath) {
   const content = fs.readFileSync(filePath, 'utf-8');
   const lines = content.split('\n');
   const violations = [];
+  const ext = path.extname(filePath).toLowerCase();
+  const isHtmlOrCss = ext === '.html' || ext === '.css';
 
   lines.forEach((line, index) => {
-    // Check keywords
-    VIOLATING_KEYWORDS.forEach(regex => {
-      if (regex.test(line)) {
-        violations.push({
-          line: index + 1,
-          content: line.trim(),
-          reason: `Detected keyword: ${regex.toString()}`
-        });
-      }
-    });
+    if (!isHtmlOrCss) {
+      // JS/TS ファイル: ネットワーク系キーワードチェック
+      VIOLATING_KEYWORDS.forEach(regex => {
+        if (regex.test(line)) {
+          violations.push({
+            line: index + 1,
+            content: line.trim(),
+            reason: `Detected keyword: ${regex.toString()}`
+          });
+        }
+      });
+    } else {
+      // HTML/CSS ファイル: 外部リソース参照パターンチェック
+      HTML_EXTERNAL_RESOURCE_PATTERNS.forEach(regex => {
+        if (regex.test(line)) {
+          violations.push({
+            line: index + 1,
+            content: line.trim(),
+            reason: `Detected external resource reference in ${ext.toUpperCase()}: ${regex.toString()}`
+          });
+        }
+      });
+    }
 
-    // Check URLs
+    // 全ファイル共通: ファイルごとに新しい正規表現インスタンスで外部 URL チェック（lastIndex 蓄積防止）
+    const urlPattern = createUrlPattern();
     let match;
-    while ((match = URL_PATTERN.exec(line)) !== null) {
+    while ((match = urlPattern.exec(line)) !== null) {
       const url = match[0];
-      // Basic exception checks
       violations.push({
         line: index + 1,
         content: line.trim(),
@@ -60,7 +89,7 @@ function scanDir(dir) {
 
     if (stat.isDirectory()) {
       results = results.concat(scanDir(fullPath));
-    } else if (stat.isFile() && /\.(js|ts|jsx|tsx)$/.test(file)) {
+    } else if (stat.isFile() && /\.(js|ts|jsx|tsx|html|css)$/.test(file)) {
       const fileViolations = checkFile(fullPath);
       if (fileViolations.length > 0) {
         results.push({

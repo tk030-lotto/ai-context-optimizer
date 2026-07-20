@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { traverseDirectory, generateTreeText, formatBytes, FileNode } from '../lib/parser/file-tree';
 import { analyzeProject } from '../lib/parser/project-analyzer';
 import { generateAuditPack } from '../lib/formatters/audit';
@@ -9,6 +9,14 @@ import { generateDocPack } from '../lib/formatters/doc';
 import { generatePhaseSummaryPack } from '../lib/formatters/phase-summary';
 import { calculateReadTime } from '../lib/parser/token-estimator';
 import { ProjectAnalysisData } from '../lib/parser/types';
+
+// --- トースト通知の型定義 ---
+type ToastType = 'error' | 'success' | 'info';
+interface Toast {
+  id: number;
+  message: string;
+  type: ToastType;
+}
 
 
 export default function App() {
@@ -29,6 +37,27 @@ export default function App() {
   const [transferCopySuccess, setTransferCopySuccess] = useState(false);
   const [docCopySuccess, setDocCopySuccess] = useState(false);
   const [phaseSummaryCopySuccess, setPhaseSummaryCopySuccess] = useState(false);
+
+  // トースト通知ステート
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [toastCounter, setToastCounter] = useState(0);
+
+  // ファイル解析進捗ステート
+  const [scanProgress, setScanProgress] = useState<{ processed: number; total: number } | null>(null);
+
+  // トースト表示ヘルパー
+  const showToast = useCallback((message: string, type: ToastType = 'error') => {
+    const id = toastCounter + 1;
+    setToastCounter(id);
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4000);
+  }, [toastCounter]);
+
+  const dismissToast = useCallback((id: number) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
 
   const calculateSummary = (nodes: FileNode[]) => {
     let fileCount = 0;
@@ -60,6 +89,7 @@ export default function App() {
         const handle = await window.showDirectoryPicker();
         setSelectedDir(handle.name);
         setIsScanning(true);
+        setScanProgress(null);
         setCopySuccess(false);
         setAuditCopySuccess(false);
         setDeepAuditCopySuccess(false);
@@ -80,8 +110,12 @@ export default function App() {
         setScanSummary(summary);
 
         // プロジェクト全体を解析（依存関係・モジュール仕様・トークン推定の集約）
-        const analyzed = await analyzeProject(handle.name, tree, text);
+        // onProgress コールバックでリアルタイム進捗を更新
+        const analyzed = await analyzeProject(handle.name, tree, text, (processed, total) => {
+          setScanProgress({ processed, total });
+        });
         setProjectData(analyzed);
+        setScanProgress(null);
 
         if (analyzed.files.length > 0) {
           // テキストファイルの中から拡張子を見て最初の適当なソースコードファイルを設定
@@ -94,13 +128,14 @@ export default function App() {
 
         setIsScanning(false);
       } else {
-        alert('お使いのブラウザは showDirectoryPicker() API に対応していません。localhost(Secure Context)で実行しているかご確認ください。');
+        showToast('お使いのブラウザは showDirectoryPicker() API に対応していません。localhost(Secure Context)で実行しているかご確認ください。', 'error');
       }
     } catch (err: any) {
       setIsScanning(false);
+      setScanProgress(null);
       if (err.name !== 'AbortError') {
         console.error(err);
-        alert('ディレクトリの選択または走査中にエラーが発生しました。');
+        showToast('ディレクトリの選択または走査中にエラーが発生しました。', 'error');
       }
     }
   };
@@ -113,7 +148,7 @@ export default function App() {
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (err) {
       console.error('Failed to copy text: ', err);
-      alert('コピーに失敗しました。');
+      showToast('コピーに失敗しました。', 'error');
     }
   };
 
@@ -134,7 +169,7 @@ export default function App() {
       setTimeout(() => setAuditCopySuccess(false), 2000);
     } catch (err) {
       console.error('Failed to copy Audit Pack: ', err);
-      alert('コピーに失敗しました。');
+      showToast('コピーに失敗しました。', 'error');
     }
   };
 
@@ -146,7 +181,7 @@ export default function App() {
       setTimeout(() => setDeepAuditCopySuccess(false), 2000);
     } catch (err) {
       console.error('Failed to copy Deep Audit Pack: ', err);
-      alert('コピーに失敗しました。');
+      showToast('コピーに失敗しました。', 'error');
     }
   };
 
@@ -158,7 +193,7 @@ export default function App() {
       setTimeout(() => setHandoverCopySuccess(false), 2000);
     } catch (err) {
       console.error('Failed to copy Handover Pack: ', err);
-      alert('コピーに失敗しました。');
+      showToast('コピーに失敗しました。', 'error');
     }
   };
 
@@ -170,7 +205,7 @@ export default function App() {
       setTimeout(() => setTransferCopySuccess(false), 2000);
     } catch (err) {
       console.error('Failed to copy Transfer Pack: ', err);
-      alert('コピーに失敗しました。');
+      showToast('コピーに失敗しました。', 'error');
     }
   };
 
@@ -182,7 +217,7 @@ export default function App() {
       setTimeout(() => setDocCopySuccess(false), 2000);
     } catch (err) {
       console.error('Failed to copy Doc Pack: ', err);
-      alert('コピーに失敗しました。');
+      showToast('コピーに失敗しました。', 'error');
     }
   };
 
@@ -194,7 +229,7 @@ export default function App() {
       setTimeout(() => setPhaseSummaryCopySuccess(false), 2000);
     } catch (err) {
       console.error('Failed to copy Phase Summary Pack: ', err);
-      alert('コピーに失敗しました。');
+      showToast('コピーに失敗しました。', 'error');
     }
   };
 
@@ -287,7 +322,7 @@ export default function App() {
           <div className="flex items-center space-x-4">
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
               <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-emerald-500 animate-ping" />
-              Phase 4 Engine Ready
+              v1.0 All Engines Ready
             </span>
           </div>
         </div>
@@ -303,9 +338,30 @@ export default function App() {
               <div className="absolute inset-0 rounded-full border-4 border-slate-800" />
               <div className="absolute inset-0 rounded-full border-4 border-brand-500 border-t-transparent animate-spin" />
             </div>
-            <div className="text-center space-y-2 animate-pulse">
-              <h3 className="text-lg font-bold text-white">プロジェクト走査中...</h3>
-              <p className="text-xs text-slate-400">ディレクトリのファイルツリーを安全に構築しています。</p>
+            <div className="text-center space-y-3">
+              <h3 className="text-lg font-bold text-white animate-pulse">
+                {scanProgress ? 'コード解析中...' : 'プロジェクト走査中...'}
+              </h3>
+              {scanProgress ? (
+                <div className="space-y-2">
+                  <p className="text-xs text-slate-400">
+                    <span className="font-bold text-brand-400">{scanProgress.processed}</span>
+                    <span className="text-slate-500"> / {scanProgress.total} ファイル解析完了</span>
+                  </p>
+                  {/* プログレスバー */}
+                  <div className="w-48 h-1.5 bg-slate-800 rounded-full overflow-hidden mx-auto">
+                    <div
+                      className="h-full bg-gradient-to-r from-brand-600 to-emerald-400 rounded-full transition-all duration-150"
+                      style={{ width: `${Math.round((scanProgress.processed / scanProgress.total) * 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-500">
+                    {Math.round((scanProgress.processed / scanProgress.total) * 100)}%
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400">ディレクトリのファイルツリーを安全に構築しています。</p>
+              )}
             </div>
           </div>
         )}
@@ -1104,6 +1160,38 @@ export default function App() {
       <footer className="border-t border-slate-900 bg-slate-950/80 py-6 text-center text-xs text-slate-500 mt-auto">
         <p>© 2026 AI Development Context Optimizer. All Rights Reserved. Fully Local Secure Process.</p>
       </footer>
+
+      {/* Toast Notification Container */}
+      <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 pointer-events-none">
+        {toasts.map(toast => (
+          <div
+            key={toast.id}
+            className={`
+              flex items-start gap-3 px-4 py-3 rounded-xl shadow-2xl border backdrop-blur-md
+              pointer-events-auto animate-fadeIn max-w-sm
+              ${
+                toast.type === 'error'
+                  ? 'bg-red-950/90 border-red-700/60 text-red-200'
+                  : toast.type === 'success'
+                  ? 'bg-emerald-950/90 border-emerald-700/60 text-emerald-200'
+                  : 'bg-slate-900/90 border-slate-700/60 text-slate-200'
+              }
+            `}
+          >
+            <span className="text-lg flex-shrink-0 mt-0.5">
+              {toast.type === 'error' ? '🔴' : toast.type === 'success' ? '✅' : 'ℹ️'}
+            </span>
+            <p className="text-xs leading-relaxed flex-1">{toast.message}</p>
+            <button
+              onClick={() => dismissToast(toast.id)}
+              className="text-current opacity-50 hover:opacity-100 transition-opacity flex-shrink-0 text-base leading-none cursor-pointer"
+              aria-label="閉じる"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
