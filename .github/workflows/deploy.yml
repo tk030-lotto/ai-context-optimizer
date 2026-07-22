@@ -1,9 +1,7 @@
 name: Deploy to GitHub Pages
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch: # 手動実行（Privateリポジトリ時の自動デプロイ失敗メールを防止）
 
 # GitHub Pages へのデプロイ権限を設定
 permissions:
