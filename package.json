@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:gh-pages": "tsc && vite build --base=./",
     "preview": "vite preview",
     "scan": "node check-no-network.js",
     "test": "npx vite-node verify-all.ts"
