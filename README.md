@@ -198,7 +198,7 @@ ai-context-optimizer/
 
 ## ライセンス
 
-Private — All rights reserved.
+[MIT License](LICENSE) © 2026 tk030
 
 ---
 
