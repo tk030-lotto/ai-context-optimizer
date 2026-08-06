@@ -117,7 +117,7 @@ npm test
 
 ## プロジェクト構造
 
-```
+```text
 ai-context-optimizer/
 ├── src/
 │   ├── app/
