@@ -1,13 +1,12 @@
 import { DEFAULT_EXCLUDED_DIRS, DEFAULT_EXCLUDED_EXTS } from '../config/constants';
 
-// FileSystemDirectoryHandle.values() は TypeScript 標準 lib 未定義のため型補完
 interface FileSystemDirectoryHandleIterable extends FileSystemDirectoryHandle {
   values(): AsyncIterableIterator<FileSystemFileHandle | FileSystemDirectoryHandle>;
 }
 
 export interface FileNode {
   name: string;
-  path: string; // Relative path from the root
+  path: string;
   kind: 'file' | 'directory';
   handle: FileSystemFileHandle | FileSystemDirectoryHandle;
   children?: FileNode[];
@@ -19,12 +18,21 @@ export interface TraverseOptions {
   excludedExts?: Set<string>;
 }
 
+const COMPOUND_EXTENSIONS = ['.tar.gz', '.tar.bz2', '.tar.xz', '.tar.zst', '.tar.br'];
+
+function extractFileExtension(fileName: string): string {
+  const lower = fileName.toLowerCase();
+  for (const compound of COMPOUND_EXTENSIONS) {
+    if (lower.endsWith(compound)) {
+      return compound;
+    }
+  }
+  const dotIndex = fileName.lastIndexOf('.');
+  return dotIndex !== -1 ? fileName.substring(dotIndex).toLowerCase() : '';
+}
+
 /**
  * File System Access API を用いてディレクトリを再帰的に走査します。
- * 
- * @param dirHandle ルートまたはサブディレクトリのハンドル
- * @param currentPath ルートからの相対パス
- * @param options 除外設定などのオプション
  */
 export async function traverseDirectory(
   dirHandle: FileSystemDirectoryHandle,
@@ -52,10 +60,8 @@ export async function traverseDirectory(
         children
       });
     } else if (entry.kind === 'file') {
-      const dotIndex = entry.name.lastIndexOf('.');
-      const ext = dotIndex !== -1 ? entry.name.substring(dotIndex).toLowerCase() : '';
+      const ext = extractFileExtension(entry.name);
       
-      // 拡張子またはファイル名自体が除外リストにあればスキップ
       if (excludedExts.has(ext) || excludedExts.has(entry.name)) {
         continue;
       }
@@ -78,7 +84,6 @@ export async function traverseDirectory(
     }
   }
 
-  // ディレクトリが先、ファイルが後になるよう名前順でソート
   return nodes.sort((a, b) => {
     if (a.kind !== b.kind) {
       return a.kind === 'directory' ? -1 : 1;
@@ -87,9 +92,6 @@ export async function traverseDirectory(
   });
 }
 
-/**
- * バイト数を読みやすい形式（KB, MB 等）にフォーマットします。
- */
 export function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B';
   const k = 1024;
@@ -99,9 +101,6 @@ export function formatBytes(bytes: number): string {
   return `${val} ${sizes[i]}`;
 }
 
-/**
- * 走査されたファイルノード配列から、視覚的なフォルダツリーテキストを生成します。
- */
 export function generateTreeText(nodes: FileNode[], prefix = ''): string {
   let text = '';
   for (let i = 0; i < nodes.length; i++) {
