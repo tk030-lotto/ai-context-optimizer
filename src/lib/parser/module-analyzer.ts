@@ -119,18 +119,24 @@ function extractJsClassBody(content: string, classIndex: number): { body: string
 
 /**
  * 引数リスト文字列をカンマで分割する。
- * ジェネリック型 `<K, V>` の内側のカンマは分割しない（山括弧の深さを追跡）。
+ * ジェネリック型 `<K, V>` の内側のカンマ、および丸括弧の深さ（Python の型注釈用）に対応する。
  */
 function splitParameters(paramText: string): string[] {
   if (!paramText.trim()) return [];
   const params: string[] = [];
-  let depth = 0;
+  let angleDepth = 0;
+  let parenDepth = 0;
+  let bracketDepth = 0;
   let current = '';
 
   for (const ch of paramText) {
-    if (ch === '<') { depth++; current += ch; }
-    else if (ch === '>') { depth--; current += ch; }
-    else if (ch === ',' && depth === 0) {
+    if (ch === '<') { angleDepth++; current += ch; }
+    else if (ch === '>') { angleDepth--; current += ch; }
+    else if (ch === '(') { parenDepth++; current += ch; }
+    else if (ch === ')') { parenDepth--; current += ch; }
+    else if (ch === '[') { bracketDepth++; current += ch; }
+    else if (ch === ']') { bracketDepth--; current += ch; }
+    else if (ch === ',' && angleDepth === 0 && parenDepth === 0 && bracketDepth === 0) {
       const name = current.trim().split(':')[0].trim();
       if (name) params.push(name);
       current = '';
@@ -138,11 +144,28 @@ function splitParameters(paramText: string): string[] {
       current += ch;
     }
   }
-  // 末尾の最後の引数
   const lastName = current.trim().split(':')[0].trim();
   if (lastName) params.push(lastName);
 
   return params.filter(Boolean);
+}
+
+/**
+ * 開始・終了インデックス指定で、引数リスト文字列（括弧の深さを考慮）を抽出する。
+ * Python の `def foo(x: dict[str, int], y: List[int])` のような型注釈内の括弧に対応。
+ */
+function extractBalancedParens(text: string, startIndex: number): { content: string; endIndex: number } | null {
+  if (text[startIndex] !== '(') return null;
+  let depth = 1;
+  let idx = startIndex + 1;
+  while (idx < text.length && depth > 0) {
+    const ch = text[idx];
+    if (ch === '(') depth++;
+    else if (ch === ')') depth--;
+    if (depth > 0) idx++;
+  }
+  if (depth !== 0) return null;
+  return { content: text.substring(startIndex + 1, idx), endIndex: idx };
 }
 
 function analyzeJsTsModule(content: string): ModuleAnalysisResult {
@@ -283,10 +306,20 @@ function analyzePythonModule(content: string): ModuleAnalysisResult {
     const trimmed = line.trim();
 
     if (trimmed.startsWith('class ')) {
-      const classMatch = trimmed.match(/^class\s+([a-zA-Z0-9_]+)(?:\(([^)]+)\))?:/);
-      if (classMatch) {
-        const className = classMatch[1];
-        const baseClass = classMatch[2]?.trim();
+      const parenIdx = trimmed.indexOf('(');
+      const braceIdx = trimmed.indexOf(':');
+      const nameMatch = trimmed.match(/^class\s+([a-zA-Z0-9_]+)/);
+      const className = nameMatch?.[1] ?? '';
+
+      let baseClass: string | undefined;
+      if (parenIdx !== -1 && (braceIdx === -1 || parenIdx < braceIdx)) {
+        const parenResult = extractBalancedParens(trimmed, parenIdx);
+        if (parenResult) {
+          baseClass = parenResult.content.trim();
+        }
+      }
+
+      if (className) {
         const docstring = getPythonDocstring(lines, i);
         const classIndent = getIndent(line);
 
@@ -309,19 +342,24 @@ function analyzePythonModule(content: string): ModuleAnalysisResult {
           }
 
           if (nextTrimmed.startsWith('def ')) {
-            const methodMatch = nextTrimmed.match(/^def\s+([a-zA-Z0-9_]+)\s*\(([^)]*)\)(?:\s*->\s*([^:]+))?:/);
-            if (methodMatch) {
-              const methodName = methodMatch[1];
-              const args = splitParameters(methodMatch[2]).filter(a => a !== 'self' && a !== 'cls');
-              const retType = methodMatch[3]?.trim();
-              const methodDoc = getPythonDocstring(lines, j);
+            const defNameMatch = nextTrimmed.match(/^def\s+([a-zA-Z0-9_]+)/);
+            const openParenIdx = nextTrimmed.indexOf('(', 4);
+            if (defNameMatch && openParenIdx !== -1) {
+              const parenResult = extractBalancedParens(nextTrimmed, openParenIdx);
+              if (parenResult) {
+                const args = splitParameters(parenResult.content).filter(a => a !== 'self' && a !== 'cls');
+                const restAfter = nextTrimmed.substring(parenResult.endIndex + 1).trim();
+                const retTypeMatch = restAfter.match(/^->\s*([^:]+):/);
+                const retType = retTypeMatch?.[1]?.trim();
+                const methodDoc = getPythonDocstring(lines, j);
 
-              methods.push({
-                name: methodName,
-                arguments: args,
-                returnType: retType,
-                description: methodDoc
-              });
+                methods.push({
+                  name: defNameMatch[1],
+                  arguments: args,
+                  returnType: retType,
+                  description: methodDoc
+                });
+              }
             }
           }
 

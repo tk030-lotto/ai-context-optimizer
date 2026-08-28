@@ -84,8 +84,7 @@ export default function App() {
 
   const handleSelectDirectory = async () => {
     try {
-      if ('showDirectoryPicker' in window) {
-        // @ts-ignore
+      if (window.showDirectoryPicker) {
         const handle = await window.showDirectoryPicker();
         setSelectedDir(handle.name);
         setIsScanning(true);
@@ -393,21 +392,21 @@ export default function App() {
 
             {/* Summary Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-slate-900/30 border border-slate-850 p-5 rounded-2xl relative overflow-hidden group">
+              <div className="bg-slate-900/30 border border-slate-800 p-5 rounded-2xl relative overflow-hidden group">
                 <div className="absolute top-0 left-0 w-1 h-full bg-brand-500" />
                 <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">総フォルダ数</span>
                 <p className="text-3xl font-extrabold text-white mt-2">{scanSummary.dirCount}</p>
                 <span className="text-[10px] text-slate-400 block mt-1">※除外設定適用後</span>
               </div>
               
-              <div className="bg-slate-900/30 border border-slate-850 p-5 rounded-2xl relative overflow-hidden group">
+              <div className="bg-slate-900/30 border border-slate-800 p-5 rounded-2xl relative overflow-hidden group">
                 <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500" />
                 <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">総ファイル数</span>
                 <p className="text-3xl font-extrabold text-white mt-2">{scanSummary.fileCount}</p>
                 <span className="text-[10px] text-slate-400 block mt-1">※除外設定適用後</span>
               </div>
 
-              <div className="bg-slate-900/30 border border-slate-850 p-5 rounded-2xl relative overflow-hidden group">
+              <div className="bg-slate-900/30 border border-slate-800 p-5 rounded-2xl relative overflow-hidden group">
                 <div className="absolute top-0 left-0 w-1 h-full bg-teal-500" />
                 <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">合計サイズ</span>
                 <p className="text-3xl font-extrabold text-white mt-2">{formatBytes(scanSummary.totalBytes)}</p>
@@ -495,7 +494,7 @@ export default function App() {
                 <div className="flex items-center justify-between border-b border-slate-800/60 pb-4">
                   <div className="flex items-center space-x-2">
                     <span className="text-sm font-bold text-white">🌳 プロジェクト構造ツリー</span>
-                    <span className="text-[10px] bg-slate-800 text-slate-350 px-2 py-0.5 rounded border border-slate-700">無視フィルタ適用済</span>
+                    <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">無視フィルタ適用済</span>
                   </div>
                   <button
                     onClick={handleCopyTree}
@@ -528,7 +527,7 @@ export default function App() {
               <div className="bg-slate-900/40 border border-t-0 border-slate-800 rounded-b-3xl p-6 backdrop-blur-md shadow-2xl space-y-6 animate-fadeIn">
                 
                 {/* Token limits controls & Stats info */}
-                <div className="bg-slate-950/60 border border-slate-850 p-5 rounded-2xl space-y-4">
+                <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-2xl space-y-4">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="space-y-1">
                       <h4 className="text-sm font-bold text-white">目標最大トークン制限調整</h4>
@@ -553,7 +552,7 @@ export default function App() {
                   </div>
 
                   {/* Divider */}
-                  <div className="border-t border-slate-850 my-2" />
+                  <div className="border-t border-slate-800 my-2" />
 
                   {/* Estimation Results Panel */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -589,7 +588,7 @@ export default function App() {
                 <div className="flex items-center justify-between border-b border-slate-800/60 pb-4">
                   <div className="flex items-center space-x-2">
                     <span className="text-sm font-bold text-white">🔍 監査パック (Markdown) プレビュー</span>
-                    <span className="text-[10px] bg-slate-800 text-slate-350 px-2 py-0.5 rounded border border-slate-700">コピー＆ペースト用</span>
+                    <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">コピー＆ペースト用</span>
                   </div>
                   <button
                     onClick={() => handleCopyAudit(auditPackResult.markdown)}
@@ -617,7 +616,7 @@ export default function App() {
               <div className="bg-slate-900/40 border border-t-0 border-slate-800 rounded-b-3xl p-6 backdrop-blur-md shadow-2xl space-y-6 animate-fadeIn">
                 
                 {/* Target file selector dropdown */}
-                <div className="bg-slate-950/60 border border-slate-850 p-5 rounded-2xl space-y-4">
+                <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-2xl space-y-4">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="space-y-1">
                       <h4 className="text-sm font-bold text-white">詳細監査対象ファイル選択</h4>
@@ -639,7 +638,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="border-t border-slate-850 my-2" />
+                  <div className="border-t border-slate-800 my-2" />
 
                   {/* Token limits controls & Stats info */}
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -665,7 +664,7 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="border-t border-slate-850 my-2" />
+                  <div className="border-t border-slate-800 my-2" />
 
                   {/* Estimation Results Panel */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -701,7 +700,7 @@ export default function App() {
                 <div className="flex items-center justify-between border-b border-slate-800/60 pb-4">
                   <div className="flex items-center space-x-2">
                     <span className="text-sm font-bold text-white">🔍 詳細監査パック (Markdown) プレビュー</span>
-                    <span className="text-[10px] bg-slate-800 text-slate-350 px-2 py-0.5 rounded border border-slate-700">コピー＆ペースト用</span>
+                    <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">コピー＆ペースト用</span>
                   </div>
                   <button
                     onClick={() => handleCopyDeepAudit(deepAuditPackResult.markdown)}
@@ -729,7 +728,7 @@ export default function App() {
               <div className="bg-slate-900/40 border border-t-0 border-slate-800 rounded-b-3xl p-6 backdrop-blur-md shadow-2xl space-y-6 animate-fadeIn">
                 
                 {/* Token limits controls & Stats info */}
-                <div className="bg-slate-950/60 border border-slate-850 p-5 rounded-2xl space-y-4">
+                <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-2xl space-y-4">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="space-y-1">
                       <h4 className="text-sm font-bold text-white">目標最大トークン制限調整</h4>
@@ -754,7 +753,7 @@ export default function App() {
                   </div>
 
                   {/* Divider */}
-                  <div className="border-t border-slate-850 my-2" />
+                  <div className="border-t border-slate-800 my-2" />
 
                   {/* Estimation Results Panel */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -790,7 +789,7 @@ export default function App() {
                 <div className="flex items-center justify-between border-b border-slate-800/60 pb-4">
                   <div className="flex items-center space-x-2">
                     <span className="text-sm font-bold text-white">🤝 引継ぎ用パック (Markdown) プレビュー</span>
-                    <span className="text-[10px] bg-slate-800 text-slate-350 px-2 py-0.5 rounded border border-slate-700">コピー＆ペースト用</span>
+                    <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">コピー＆ペースト用</span>
                   </div>
                   <button
                     onClick={() => handleCopyHandover(handoverPackResult.markdown)}
@@ -818,7 +817,7 @@ export default function App() {
               <div className="bg-slate-900/40 border border-t-0 border-slate-800 rounded-b-3xl p-6 backdrop-blur-md shadow-2xl space-y-6 animate-fadeIn">
                 
                 {/* Token limits controls & Stats info */}
-                <div className="bg-slate-950/60 border border-slate-850 p-5 rounded-2xl space-y-4">
+                <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-2xl space-y-4">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="space-y-1">
                       <h4 className="text-sm font-bold text-white">目標最大トークン制限調整</h4>
@@ -843,7 +842,7 @@ export default function App() {
                   </div>
 
                   {/* Divider */}
-                  <div className="border-t border-slate-850 my-2" />
+                  <div className="border-t border-slate-800 my-2" />
 
                   {/* Estimation Results Panel */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -879,7 +878,7 @@ export default function App() {
                 <div className="flex items-center justify-between border-b border-slate-800/60 pb-4">
                   <div className="flex items-center space-x-2">
                     <span className="text-sm font-bold text-white">🔄 AI移行用パック (Markdown) プレビュー</span>
-                    <span className="text-[10px] bg-slate-800 text-slate-350 px-2 py-0.5 rounded border border-slate-700">コピー＆ペースト用</span>
+                    <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">コピー＆ペースト用</span>
                   </div>
                   <button
                     onClick={() => handleCopyTransfer(transferPackResult.markdown)}
@@ -907,7 +906,7 @@ export default function App() {
               <div className="bg-slate-900/40 border border-t-0 border-slate-800 rounded-b-3xl p-6 backdrop-blur-md shadow-2xl space-y-6 animate-fadeIn">
                 
                 {/* Token limits controls & Stats info */}
-                <div className="bg-slate-950/60 border border-slate-850 p-5 rounded-2xl space-y-4">
+                <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-2xl space-y-4">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="space-y-1">
                       <h4 className="text-sm font-bold text-white">目標最大トークン制限調整</h4>
@@ -932,7 +931,7 @@ export default function App() {
                   </div>
 
                   {/* Divider */}
-                  <div className="border-t border-slate-850 my-2" />
+                  <div className="border-t border-slate-800 my-2" />
 
                   {/* Estimation Results Panel */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -968,7 +967,7 @@ export default function App() {
                 <div className="flex items-center justify-between border-b border-slate-800/60 pb-4">
                   <div className="flex items-center space-x-2">
                     <span className="text-sm font-bold text-white">📄 ドキュメントパック (Markdown) プレビュー</span>
-                    <span className="text-[10px] bg-slate-800 text-slate-350 px-2 py-0.5 rounded border border-slate-700">コピー＆ペースト用</span>
+                    <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">コピー＆ペースト用</span>
                   </div>
                   <button
                     onClick={() => handleCopyDoc(docPackResult.markdown)}
@@ -996,7 +995,7 @@ export default function App() {
               <div className="bg-slate-900/40 border border-t-0 border-slate-800 rounded-b-3xl p-6 backdrop-blur-md shadow-2xl space-y-6 animate-fadeIn">
                 
                 {/* Token limits controls & Stats info */}
-                <div className="bg-slate-950/60 border border-slate-850 p-5 rounded-2xl space-y-4">
+                <div className="bg-slate-950/60 border border-slate-800 p-5 rounded-2xl space-y-4">
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div className="space-y-1">
                       <h4 className="text-sm font-bold text-white">目標最大トークン制限調整</h4>
@@ -1021,7 +1020,7 @@ export default function App() {
                   </div>
 
                   {/* Divider */}
-                  <div className="border-t border-slate-850 my-2" />
+                  <div className="border-t border-slate-800 my-2" />
 
                   {/* Estimation Results Panel */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1057,7 +1056,7 @@ export default function App() {
                 <div className="flex items-center justify-between border-b border-slate-800/60 pb-4">
                   <div className="flex items-center space-x-2">
                     <span className="text-sm font-bold text-white">📋 フェーズ完了サマリー (Markdown) プレビュー</span>
-                    <span className="text-[10px] bg-slate-800 text-slate-350 px-2 py-0.5 rounded border border-slate-700">コピー＆ペースト用</span>
+                    <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">コピー＆ペースト用</span>
                   </div>
                   <button
                     onClick={() => handleCopyPhaseSummary(phaseSummaryPackResult.markdown)}
