@@ -1,8 +1,8 @@
 # AI Pipeline - Test Report
 
-- Scan Timestamp: 2026-07-22T04:53:01.041Z
+- Scan Timestamp: 2026-08-28T07:29:09.215Z
 - Total Tests Run: 7
-- Status: ALL PASSED
+- Status: SOME TESTS FAILED
 
 ## Test Execution Summary
 
@@ -12,6 +12,6 @@
 | `src/lib/formatters/__tests__/verify-audit.ts` | PASS |
 | `src/lib/formatters/__tests__/verify-deep-audit.ts` | PASS |
 | `src/lib/formatters/__tests__/verify-doc.ts` | PASS |
-| `src/lib/formatters/__tests__/verify-handover.ts` | PASS |
-| `src/lib/formatters/__tests__/verify-phase-summary.ts` | PASS |
+| `src/lib/formatters/__tests__/verify-handover.ts` | FAIL |
+| `src/lib/formatters/__tests__/verify-phase-summary.ts` | FAIL |
 | `src/lib/formatters/__tests__/verify-transfer.ts` | PASS |
