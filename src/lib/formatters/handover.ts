@@ -15,40 +15,26 @@ export function generateHandoverPack(
 ): { markdown: string; fallbackLevel: number; estimatedTokens: number } {
   const maxTokens = options.maxTokens || 4000;
   
-  let selectedMarkdown = '';
-  let selectedLevel = 0;
-  let selectedTokens = 0;
-
   // 縮退レベル 0 から 5 まで順にシミュレーション
   for (let level = 0; level <= 5; level++) {
     const markdown = buildMarkdownForLevel(data, level);
     const tokens = estimateTokens(markdown);
     
-    selectedMarkdown = markdown;
-    selectedLevel = level;
-    selectedTokens = tokens;
-
-    // 目標トークン数以下に収まった場合はそれを返す
-    if (tokens <= maxTokens) {
-      break;
+    // 目標トークン数以下に収まった場合、または最終レベルに達した場合はそれを返す
+    if (tokens <= maxTokens || level === 5) {
+      return {
+        markdown,
+        fallbackLevel: level,
+        estimatedTokens: tokens
+      };
     }
   }
 
-  // トークン予算の妥当性検証・警告同梱
-  if (selectedTokens > maxTokens || maxTokens < 2048) {
-    const warningMessage = `> [!WARNING]\n> ⚠️ 指定されたトークン予算（${maxTokens}）が非常に小さいため、ファイル内容の大部分またはすべてがトリミングされました。本来の目的（十分なコード情報の提供）を果たせていない可能性があります。\n\n`;
-    selectedMarkdown = warningMessage + selectedMarkdown;
-    selectedTokens = estimateTokens(selectedMarkdown);
-  }
-
-  // ワンクリックコピー用ブロック包装
-  const userInstructionHeader = `### 📋 引き継ぎプロンプト（以下のコードブロックをコピーして次のチャットに送信してください）\n\n`;
-  const copyableMarkdown = `${userInstructionHeader}\`\`\`markdown\n${selectedMarkdown}\n\`\`\``;
-
+  const fallbackMarkdown = buildMarkdownForLevel(data, 5);
   return {
-    markdown: copyableMarkdown,
-    fallbackLevel: selectedLevel,
-    estimatedTokens: estimateTokens(copyableMarkdown)
+    markdown: fallbackMarkdown,
+    fallbackLevel: 5,
+    estimatedTokens: estimateTokens(fallbackMarkdown)
   };
 }
 
@@ -259,7 +245,7 @@ function extractNextTasks(data: ProjectAnalysisData): string[] {
 
 function extractConstraints(data: ProjectAnalysisData): string[] {
   const constraints: string[] = [];
-  const agentFile = data.files.find(f => f.name.toLowerCase() === 'agents.md' || f.name.toLowerCase() === '.cursorrules');
+  const agentFile = data.files.find(f => f.name.toLowerCase() === 'agents.md' || f.name.toLowerCase() === '.cursorrules' || f.name.toLowerCase() === 'ai_rules.md');
   if (agentFile && agentFile.content) {
     const lines = agentFile.content.split('\n');
     for (const line of lines) {
@@ -273,6 +259,31 @@ function extractConstraints(data: ProjectAnalysisData): string[] {
     }
   }
 
+  const planFile = data.files.find(f => f.name.toLowerCase() === 'project_plan.md' || f.name.toLowerCase() === 'schedule.md');
+  if (planFile && planFile.content) {
+    const lines = planFile.content.split('\n');
+    let inSection = false;
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('##') && (trimmed.includes('成功条件') || trimmed.includes('防衛方針') || trimmed.includes('Constraints') || trimmed.includes('DoD'))) {
+        inSection = true;
+        continue;
+      }
+      if (inSection) {
+        if (trimmed.startsWith('##')) {
+          inSection = false;
+          continue;
+        }
+        if (trimmed.startsWith('-') || trimmed.startsWith('*')) {
+          const text = trimmed.replace(/^[-*]\s*(\[[ xX/]+\])?\s*/, '').trim();
+          if (text && !constraints.includes(text)) {
+            constraints.push(text);
+          }
+        }
+      }
+    }
+  }
+
   return constraints;
 }
 
@@ -281,12 +292,34 @@ function extractKnownIssues(data: ProjectAnalysisData): string[] {
   const recordFile = data.files.find(f => f.name.toLowerCase() === 'record.md' || f.name.toLowerCase() === 'evaluation_report.md');
   if (recordFile && recordFile.content) {
     const lines = recordFile.content.split('\n');
+    let inSection = false;
     for (const line of lines) {
       const trimmed = line.trim();
-      if (trimmed.includes('課題') || trimmed.includes('留意事項') || trimmed.includes('検出事項')) {
-        const clean = trimmed.replace(/^[-*#]\s*/, '').trim();
-        if (clean && clean.length > 5 && !issues.includes(clean)) {
-          issues.push(clean);
+      if (trimmed.startsWith('##') && (
+        trimmed.includes('課題') || trimmed.includes('留意事項') ||
+        trimmed.includes('検出事項') || trimmed.toLowerCase().includes('known issues') ||
+        trimmed.toLowerCase().includes('issues')
+      )) {
+        inSection = true;
+        continue;
+      }
+      if (inSection) {
+        if (trimmed.startsWith('##')) {
+          inSection = false;
+          continue;
+        }
+        if (trimmed.startsWith('-') || trimmed.startsWith('*')) {
+          const clean = trimmed.replace(/^[-*]\s*/, '').trim();
+          if (clean && !issues.includes(clean)) {
+            issues.push(clean);
+          }
+        }
+      } else {
+        if (trimmed.includes('課題') || trimmed.includes('留意事項') || trimmed.includes('検出事項')) {
+          const clean = trimmed.replace(/^[-*#\s]+/, '').trim();
+          if (clean && clean.length > 5 && !issues.includes(clean)) {
+            issues.push(clean);
+          }
         }
       }
     }

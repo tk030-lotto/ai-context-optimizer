@@ -64,6 +64,8 @@ This is a mock project description for testing. It has multiple phases and guide
 - [ ] Create transfer mode generator
 - [ ] Support external library summary tab
 - [ ] Add known bugs checklist
+- [ ] Extra pending task for verification
+
 `,
       tokens: 800,
       dependencies: []

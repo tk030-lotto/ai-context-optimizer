@@ -101,8 +101,6 @@ function runTests() {
 
   console.log(`Token progression: L0=${tok0}, L1=${tok1}, L2=${tok2}, L3=${tok3}, L4=${tok4}, L5=${tok5}`);
 
-  console.log(`Token progression: L0=${tok0}, L1=${tok1}, L2=${tok2}, L3=${tok3}, L4=${tok4}, L5=${tok5}`);
-
   // Test 1: 十分に大きいトークン制限（縮退レベル0: フル）
   console.log('Test 1: Generates full summary (Level 0)');
   const testRes0 = generatePhaseSummaryPack(data, { maxTokens: 15000 });

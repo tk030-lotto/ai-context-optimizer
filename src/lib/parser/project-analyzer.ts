@@ -85,6 +85,7 @@ export async function analyzeProject(
         tokens: 0,
         dependencies: []
       });
+      totalBytes += node.size || 0;
     }
 
     // 進捗コールバックを呼び出す

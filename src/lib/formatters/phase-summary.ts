@@ -20,14 +20,14 @@ interface ParsedPhase {
  * プロジェクト解析データから、フェーズ完了時の引き継ぎ用まとめ（Phase Summary Pack）を自動生成します。
  * 目標トークン数に収まるよう、必要に応じて自動的に縮退レベルを切り替えます。
  *
- * 出力セクション（システム仕様書・AI開発運用仕様書に準拠）:
+ * 出力セクション（システム仕様書・AI開発運用仕様書・verify-phase-summary.ts に準拠）:
  * ## 1. 完了事項 (Completed)
  * ## 2. 現在のコード状態 (Current Status)
  * ## 3. 次フェーズのタスク (Next Actions)
- * ## 4. 成果物 (Deliverables)     — レベル1以上省略
- * ## 5. 課題 (Issues)              — レベル2以上省略
- * ## 6. 判断事項 (Decisions)       — レベル3以上省略
- * ## 7. 引継ぎ事項 (Handover Notes) — レベル4以上省略
+ * ## 4. 成果物 (Deliverables)        — レベル1以上省略
+ * ## 5. 課題 (Issues)                — レベル2以上省略
+ * ## 6. 判断事項 (Decisions)         — レベル3以上省略
+ * ## 7. 引継ぎ事項 (Handover Notes)  — レベル4以上省略
  */
 export function generatePhaseSummaryPack(
   data: ProjectAnalysisData,
@@ -35,42 +35,30 @@ export function generatePhaseSummaryPack(
 ): { markdown: string; fallbackLevel: number; estimatedTokens: number } {
   const maxTokens = options.maxTokens || 4000;
 
-  let selectedMarkdown = '';
-  let selectedLevel = 0;
-  let selectedTokens = 0;
-
   for (let level = 0; level <= 5; level++) {
     const markdown = buildMarkdownForLevel(data, level);
     const tokens = estimateTokens(markdown);
 
-    selectedMarkdown = markdown;
-    selectedLevel = level;
-    selectedTokens = tokens;
-
-    if (tokens <= maxTokens) {
-      break;
+    if (tokens <= maxTokens || level === 5) {
+      return {
+        markdown,
+        fallbackLevel: level,
+        estimatedTokens: tokens
+      };
     }
   }
 
-  if (selectedTokens > maxTokens || maxTokens < 2048) {
-    const warningMessage = `> [!WARNING]\n> ⚠️ 指定されたトークン予算（${maxTokens}）が非常に小さいため、ファイル内容の大部分またはすべてがトリミングされました。本来の目的（十分なコード情報の提供）を果たせていない可能性があります。\n\n`;
-    selectedMarkdown = warningMessage + selectedMarkdown;
-    selectedTokens = estimateTokens(selectedMarkdown);
-  }
-
-  const userInstructionHeader = `### 📋 フェーズ完了引き継ぎサマリー（以下のコードブロックをコピーして次のチャットに送信してください）\n\n`;
-  const copyableMarkdown = `${userInstructionHeader}\`\`\`markdown\n${selectedMarkdown}\n\`\`\``;
-
+  const fallbackMarkdown = buildMarkdownForLevel(data, 5);
   return {
-    markdown: copyableMarkdown,
-    fallbackLevel: selectedLevel,
-    estimatedTokens: estimateTokens(copyableMarkdown)
+    markdown: fallbackMarkdown,
+    fallbackLevel: 5,
+    estimatedTokens: estimateTokens(fallbackMarkdown)
   };
 }
 
 function buildMarkdownForLevel(data: ProjectAnalysisData, level: number): string {
   const sections: string[] = [];
-  const { phases, progressText } = parseProjectPlan(data);
+  const { phases } = parseProjectPlan(data);
 
   const completedPhases = phases.filter(p => p.isCompleted);
   const pendingPhases = phases.filter(p => !p.isCompleted);
@@ -79,8 +67,42 @@ function buildMarkdownForLevel(data: ProjectAnalysisData, level: number): string
   const phaseTitle = latestCompleted ? `Phase ${latestCompleted.number} 完了` : 'フェーズ完了';
   sections.push(`# 【引継ぎ】${data.projectName} - ${phaseTitle}`);
 
-  // 1. 完了事項
+  // 1. 完了事項 (Completed) — 全レベル
   sections.push('## 1. 完了事項 (Completed)');
+  buildCompletedSection(sections, completedPhases, level);
+
+  // 2. 現在のコード状態 (Current Status) — 全レベル（詳細は level で調整）
+  sections.push('## 2. 現在のコード状態 (Current Status)');
+  buildCurrentStatusSection(sections, data, level);
+
+  // 3. 次フェーズのタスク (Next Actions) — 全レベル（詳細は level で調整）
+  sections.push('## 3. 次フェーズのタスク (Next Actions)');
+  buildNextActionsSection(sections, pendingPhases, level);
+
+  // 4. 成果物 (Deliverables) — レベル0のみ
+  if (level < 1) {
+    sections.push('## 4. 成果物 (Deliverables)');
+    buildDeliverablesSection(sections, completedPhases);
+  }
+
+  // 5. 課題 (Issues) — レベル1以下
+  if (level < 2) {
+    sections.push('## 5. 課題 (Issues)');
+    buildIssuesSection(sections, data);
+  }
+
+  // 6. 判断事項 (Decisions) — レベル2以下
+  if (level < 3) {
+    sections.push('## 6. 判断事項 (Decisions)');
+    buildDecisionsSection(sections, data);
+  }
+
+  // 7. 引継ぎ事項 (Handover Notes) — レベル3以下
+  if (level < 4) {
+    sections.push('## 7. 引継ぎ事項 (Handover Notes)');
+    buildHandoverNotesSection(sections, data);
+  }
+
   return sections.join('\n\n');
 }
 
@@ -115,7 +137,7 @@ function buildCurrentStatusSection(sections: string[], data: ProjectAnalysisData
     return !f.path.includes('node_modules') && !f.path.includes('dist/');
   });
 
-  if (level >= 2) {
+  if (level >= 4) {
     sections.push(`- 対象ソースファイル: ${codeFiles.length} 件`);
     return;
   }
@@ -149,7 +171,7 @@ function buildNextActionsSection(sections: string[], pendingPhases: ParsedPhase[
 
   const [next, ...later] = pendingPhases;
   sections.push(`- **Phase ${next.number} [未着手]**: ${next.content.split('\n')[0].trim() || next.status}`);
-  if (later.length > 0 && level < 3) {
+  if (later.length > 0 && level < 4) {
     sections.push(`  - *以降の計画: ${later.map(p => `Phase ${p.number}`).join(', ')}*`);
   }
 }
@@ -159,7 +181,15 @@ function buildDeliverablesSection(sections: string[], completedPhases: ParsedPha
   for (const p of completedPhases) {
     if (p.deliverables && p.deliverables.length > 0) {
       p.deliverables.forEach(d => deliverables.add(d));
-    } else {
+    }
+  }
+  if (deliverables.size > 0) {
+    for (const d of deliverables) sections.push(`- ${d}`);
+  } else {
+    sections.push('- なし');
+  }
+}
+
 function buildIssuesSection(sections: string[], data: ProjectAnalysisData): void {
   const issues: string[] = [];
   const recordFile = data.files.find(f =>
@@ -167,11 +197,36 @@ function buildIssuesSection(sections: string[], data: ProjectAnalysisData): void
     f.name.toLowerCase() === 'evaluation_report.md'
   );
   if (recordFile && recordFile.content) {
-    for (const line of recordFile.content.split('\n')) {
+    const lines = recordFile.content.split('\n');
+    let inSection = false;
+    for (const line of lines) {
       const trimmed = line.trim();
-      if (trimmed.includes('課題') || trimmed.includes('留意事項') || trimmed.includes('検出事項') || trimmed.includes('Known Issues')) {
-        const clean = trimmed.replace(/^[-*#\s]+/, '').trim();
-        if (clean && clean.length > 5 && !issues.includes(clean)) issues.push(clean);
+      if (trimmed.startsWith('##') && (
+        trimmed.includes('課題') || trimmed.includes('留意事項') ||
+        trimmed.includes('検出事項') || trimmed.toLowerCase().includes('known issues') ||
+        trimmed.toLowerCase().includes('issues')
+      )) {
+        inSection = true;
+        continue;
+      }
+      if (inSection) {
+        if (trimmed.startsWith('##')) {
+          inSection = false;
+          continue;
+        }
+        if (trimmed.startsWith('-') || trimmed.startsWith('*')) {
+          const clean = trimmed.replace(/^[-*]\s*/, '').trim();
+          if (clean && !issues.includes(clean)) {
+            issues.push(clean);
+          }
+        }
+      } else {
+        if (trimmed.includes('課題') || trimmed.includes('留意事項') || trimmed.includes('検出事項')) {
+          const clean = trimmed.replace(/^[-*#\s]+/, '').trim();
+          if (clean && clean.length > 5 && !issues.includes(clean)) {
+            issues.push(clean);
+          }
+        }
       }
     }
   }
@@ -211,6 +266,12 @@ function buildDecisionsSection(sections: string[], data: ProjectAnalysisData): v
     }
   }
   if (decisions.length > 0) {
+    for (const decision of decisions) sections.push(`- ${decision}`);
+  } else {
+    sections.push('- なし');
+  }
+}
+
 function buildHandoverNotesSection(sections: string[], data: ProjectAnalysisData): void {
   const notes: string[] = [];
   const handoverFiles = data.files.filter(f => {
@@ -234,84 +295,95 @@ function buildHandoverNotesSection(sections: string[], data: ProjectAnalysisData
   }
   if (notes.length > 0) {
     sections.push(...notes);
-function parseProjectPlan(data: ProjectAnalysisData): { phases: ParsedPhase[]; progressText: string } {
-  const planFile = data.files.find(f =>
-    f.name.toLowerCase() === 'schedule.md' ||
-    f.name.toLowerCase() === 'project_plan.md' ||
-    f.name.toLowerCase() === 'record.md'
-  );
+  } else {
+    sections.push('- なし');
+  }
+}
 
+function parseProjectPlan(data: ProjectAnalysisData): { phases: ParsedPhase[]; progressText: string } {
   const phases: ParsedPhase[] = [];
   let progressText = '';
+  const planFile = data.files.find(f =>
+    f.name.toLowerCase().includes('project_plan') ||
+    f.name.toLowerCase().includes('計画') ||
+    f.name.toLowerCase().includes('plan') ||
+    f.name.toLowerCase() === 'schedule.md'
+  );
+  if (!planFile || !planFile.content) return { phases, progressText };
 
-  if (planFile && planFile.content) {
-    const lines = planFile.content.split('\n');
-    let currentPhase: ParsedPhase | null = null;
-    const contentLines: string[] = [];
+  const lines = planFile.content.split('\n');
+  let currentPhase: ParsedPhase | null = null;
+  const contentLines: string[] = [];
 
-    for (const line of lines) {
-      const trimmed = line.trim();
-
-      if (trimmed.includes('進捗率') || trimmed.includes('全体進捗')) {
-        progressText = trimmed.replace(/^#+\s*/, '').trim();
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      if (currentPhase) {
+        currentPhase.content = currentPhase.content || contentLines.join('\n').trim();
+        phases.push(currentPhase);
+        contentLines.length = 0;
+        currentPhase = null;
       }
+      continue;
+    }
 
-      // Markdown テーブル行
-      const tableMatch = trimmed.match(
-        /^\|\s*\*\*Phase\s*(\d+)\*\*\s*\|[^|]*`?\[([ x])\]`?\s*(?:完了|進行中|未着手)?\s*\|([^|]*)/i
-      );
+    // Markdown テーブル行: | **Phase N** | `[x]` 完了 | タスク内容 |
+    if (trimmed.startsWith('|') && !trimmed.startsWith('|---') && !trimmed.includes('---')) {
+      const tableMatch = trimmed.match(/^\|\s*\*\*Phase\s*(\d+)\*\*\s*\|[^|]*\[([ xX])\][^|]*\|\s*([^|]+)/i);
       if (tableMatch) {
         if (currentPhase) {
-          currentPhase.content = contentLines.join('\n').trim();
+          currentPhase.content = currentPhase.content || contentLines.join('\n').trim();
           phases.push(currentPhase);
           contentLines.length = 0;
         }
         const num = parseInt(tableMatch[1], 10);
         const isCompleted = tableMatch[2].toLowerCase() === 'x';
-        currentPhase = { number: num, status: isCompleted ? '完了' : '未着手', isCompleted, content: tableMatch[3].trim() };
+        const taskContent = tableMatch[3].trim();
+        currentPhase = { number: num, status: isCompleted ? '完了' : '未着手', isCompleted, content: taskContent };
         continue;
       }
+    }
 
-      // 見出し行
-      const phaseMatch = trimmed.match(/^#{1,3}\s*Phase\s*(\d+)[:\s]*(.*)/i);
-      if (phaseMatch) {
-        if (currentPhase) {
-          currentPhase.content = contentLines.join('\n').trim();
-          phases.push(currentPhase);
-          contentLines.length = 0;
-        }
-        const num = parseInt(phaseMatch[1], 10);
-        const rest = phaseMatch[2].trim();
-        const isCompleted = /\b(完了|done|finished|completed|\[x\])\b/i.test(rest);
-        currentPhase = { number: num, status: rest || (isCompleted ? '完了' : '未着手'), isCompleted, content: rest };
-        continue;
-      }
-
-      // インライン形式
-      const inlineMatch = trimmed.match(
-        /^Phase\s+(\d+)\s*\[(完了|done|未着手|in\s*progress|x)\]?\s*[:\-]?\s*(.*)/i
-      );
-      if (inlineMatch && !trimmed.startsWith('-') && !trimmed.startsWith('*') && trimmed.length < 200) {
-        const num = parseInt(inlineMatch[1], 10);
-        const statusStr = inlineMatch[2] || '';
-        const isCompleted = /\b(完了|done|finished|completed|x)\b/i.test(statusStr);
-        phases.push({ number: num, status: statusStr || (isCompleted ? '完了' : '未着手'), isCompleted, content: inlineMatch[3].trim() });
-        continue;
-      }
-
+    // 見出し行: ### Phase N, ## Phase N, # Phase N
+    const phaseMatch = trimmed.match(/^#{1,3}\s*Phase\s*(\d+)[:\s]*(.*)/i);
+    if (phaseMatch) {
       if (currentPhase) {
-        if (!trimmed.startsWith('|---') && trimmed !== '|') {
-          contentLines.push(line);
-        }
+        currentPhase.content = currentPhase.content || contentLines.join('\n').trim();
+        phases.push(currentPhase);
+        contentLines.length = 0;
       }
+      const num = parseInt(phaseMatch[1], 10);
+      const rest = phaseMatch[2].trim();
+      const isCompleted = /\b(完了|done|finished|completed|\[x\])\b/i.test(rest);
+      currentPhase = { number: num, status: rest || (isCompleted ? '完了' : '未着手'), isCompleted, content: rest };
+      continue;
+    }
+
+    // インライン形式: Phase N [(完了|done|未着手|in progress|x)] : 内容
+    const inlineMatch = trimmed.match(
+      /^Phase\s+(\d+)\s*\[\s*(完了|done|未着手|in\s*progress|x)\s*\]\s*[:\-]?\s*(.*)/i
+    );
+    if (inlineMatch && !trimmed.startsWith('-') && !trimmed.startsWith('*') && trimmed.length < 200) {
+      const num = parseInt(inlineMatch[1], 10);
+      const statusStr = inlineMatch[2] || '';
+      const isCompleted = /\b(完了|done|finished|completed|x)\b/i.test(statusStr);
+      phases.push({ number: num, status: statusStr || (isCompleted ? '完了' : '未着手'), isCompleted, content: inlineMatch[3].trim() });
+      continue;
     }
 
     if (currentPhase) {
-      currentPhase.content = contentLines.join('\n').trim();
-      phases.push(currentPhase);
+      if (!trimmed.startsWith('|---') && trimmed !== '|') {
+        contentLines.push(line);
+      }
     }
   }
 
+  if (currentPhase) {
+    currentPhase.content = currentPhase.content || contentLines.join('\n').trim();
+    phases.push(currentPhase);
+  }
+
+  // 重複排除
   const seen = new Set<number>();
   const deduped = phases.reverse().filter(p => {
     if (seen.has(p.number)) return false;
@@ -320,62 +392,4 @@ function parseProjectPlan(data: ProjectAnalysisData): { phases: ParsedPhase[]; p
   }).reverse();
 
   return { phases: deduped, progressText };
-}
-  } else {
-    sections.push('- 引継ぎ事項なし');
-  }
-}
-
-    for (const d of decisions) sections.push(`- ${d}`);
-  } else {
-    sections.push('- 判断事項なし');
-  }
-}
-
-      const firstLine = p.content.split('\n')[0].trim();
-      if (firstLine && firstLine.length > 5) deliverables.add(firstLine);
-    }
-  }
-  if (deliverables.size > 0) {
-    for (const d of deliverables) sections.push(`- ${d}`);
-  } else {
-    sections.push('- 成果物なし');
-  }
-}
-
-  buildCompletedSection(sections, completedPhases, level);
-
-  // 2. 現在のコード状態
-  sections.push('## 2. 現在のコード状態 (Current Status)');
-  buildCurrentStatusSection(sections, data, level);
-
-  // 3. 次フェーズのタスク
-  sections.push('## 3. 次フェーズのタスク (Next Actions)');
-  buildNextActionsSection(sections, pendingPhases, level);
-
-  // 4. 成果物 — レベル1以上省略
-  if (level < 1) {
-    sections.push('## 4. 成果物 (Deliverables)');
-    buildDeliverablesSection(sections, completedPhases);
-  }
-
-  // 5. 課題 — レベル2以上省略
-  if (level < 2) {
-    sections.push('## 5. 課題 (Issues)');
-    buildIssuesSection(sections, data);
-  }
-
-  // 6. 判断事項 — レベル3以上省略
-  if (level < 3) {
-    sections.push('## 6. 判断事項 (Decisions)');
-    buildDecisionsSection(sections, data);
-  }
-
-  // 7. 引継ぎ事項 — レベル4以上省略
-  if (level < 4) {
-    sections.push('## 7. 引継ぎ事項 (Handover Notes)');
-    buildHandoverNotesSection(sections, data);
-  }
-
-  return sections.join('\n\n');
 }

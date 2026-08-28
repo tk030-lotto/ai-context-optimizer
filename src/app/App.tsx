@@ -1034,10 +1034,10 @@ export default function App() {
                         Level {phaseSummaryPackResult.fallbackLevel}
                         <span className="text-[10px] text-slate-400 font-normal ml-1">
                           {phaseSummaryPackResult.fallbackLevel === 0 ? '(フル出力)' :
-                           phaseSummaryPackResult.fallbackLevel === 1 ? '(完了タスク制限)' :
-                           phaseSummaryPackResult.fallbackLevel === 2 ? '(詳細仕様省略)' :
-                           phaseSummaryPackResult.fallbackLevel === 3 ? '(予定タスク制限)' :
-                           phaseSummaryPackResult.fallbackLevel === 4 ? '(主要ファイル制限)' : '(最小構成)'}
+                           phaseSummaryPackResult.fallbackLevel === 1 ? '(成果物省略)' :
+                           phaseSummaryPackResult.fallbackLevel === 2 ? '(課題省略)' :
+                           phaseSummaryPackResult.fallbackLevel === 3 ? '(判断事項省略)' :
+                           phaseSummaryPackResult.fallbackLevel === 4 ? '(引継ぎ事項省略)' : '(最小構成)'}
                         </span>
                       </span>
                     </div>

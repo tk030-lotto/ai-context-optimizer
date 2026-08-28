@@ -445,7 +445,7 @@ function buildSkeletonCode(file: FileAnalysisInfo, ext: string, level: number): 
         for (const method of cls.methods) {
           let args = '';
           if (level < 4) {
-            args = ['self', ...method.arguments].join(', ');
+            args = ['self', ...method.arguments.filter(a => a !== 'self' && a !== 'cls')].join(', ');
           } else {
             args = '...';
           }

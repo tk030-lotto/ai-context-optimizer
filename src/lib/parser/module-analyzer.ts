@@ -137,14 +137,14 @@ function splitParameters(paramText: string): string[] {
     else if (ch === '[') { bracketDepth++; current += ch; }
     else if (ch === ']') { bracketDepth--; current += ch; }
     else if (ch === ',' && angleDepth === 0 && parenDepth === 0 && bracketDepth === 0) {
-      const name = current.trim().split(':')[0].trim();
+      const name = current.trim().split(':')[0].split('=')[0].replace(/\?$/, '').trim();
       if (name) params.push(name);
       current = '';
     } else {
       current += ch;
     }
   }
-  const lastName = current.trim().split(':')[0].trim();
+  const lastName = current.trim().split(':')[0].split('=')[0].replace(/\?$/, '').trim();
   if (lastName) params.push(lastName);
 
   return params.filter(Boolean);
@@ -377,22 +377,28 @@ function analyzePythonModule(content: string): ModuleAnalysisResult {
         i = j - 1;
       }
     } else if (trimmed.startsWith('def ')) {
-      const funcMatch = trimmed.match(/^def\s+([a-zA-Z0-9_]+)\s*\(([^)]*)\)(?:\s*->\s*([^:]+))?:/);
-      if (funcMatch) {
-        const funcName = funcMatch[1];
-        const args = splitParameters(funcMatch[2]);
-        const retType = funcMatch[3]?.trim();
-        const docstring = getPythonDocstring(lines, i);
+      const funcNameMatch = trimmed.match(/^def\s+([a-zA-Z0-9_]+)/);
+      const funcOpenIdx = trimmed.indexOf('(', 3);
+      if (funcNameMatch && funcOpenIdx !== -1) {
+        const parenResult = extractBalancedParens(trimmed, funcOpenIdx);
+        if (parenResult) {
+          const args = splitParameters(parenResult.content);
+          const restAfter = trimmed.substring(parenResult.endIndex + 1).trim();
+          const retTypeMatch = restAfter.match(/^->\s*([^:]+):/);
+          const retType = retTypeMatch?.[1]?.trim();
+          const docstring = getPythonDocstring(lines, i);
+          const funcName = funcNameMatch[1];
 
-        exports.push(funcName);
+          exports.push(funcName);
 
-        functions.push({
-          name: funcName,
-          arguments: args,
-          returnType: retType,
-          description: docstring,
-          isExported: true
-        });
+          functions.push({
+            name: funcName,
+            arguments: args,
+            returnType: retType,
+            description: docstring,
+            isExported: true
+          });
+        }
       }
     }
   }
