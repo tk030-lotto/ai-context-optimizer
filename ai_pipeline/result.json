@@ -227,71 +227,6 @@
       }
     },
     {
-      "path": "docs/.agents/AGENTS.md",
-      "name": "AGENTS.md",
-      "size": 3373,
-      "content": "# エージェント行動規範（AGENTS.md）\n\nこのファイルはAntigravity IDEが会話開始時に自動ロードする強制ルールです。\nソース正本: `C:\\Users\\tk030\\Desktop\\各種情報\\knowledge\\protocol.md`\n\n---\n\n## 【最最厳守】事前承認の義務（第6条）\n\n**以下のルールはいかなる状況でも例外なく適用される。**\n\n1. ユーザーからプロンプトを受け取った際、**まず必ずチャット上で「これから何を行うか」を提示し、合意を形成すること。**\n2. **ユーザーから明確な『承認（開始の許可）』を得るまでは、コード変更・ファイル書き込み・コマンド実行・ファイルの新規作成・修正を含むすべての実作業を絶対に開始してはならない。**\n3. 「引き継ぎプロンプトに書いてあったから」「良かれと思って」という理由での先行実行も禁止。\n4. 承認を得た後は、承認された範囲のみを正確に実行すること。\n\n---\n\n## 全体プロトコル参照先\n\n詳細なプロトコル全18条は以下を参照すること（作業開始時に必ず読み込む）:\n- `C:\\Users\\tk030\\Desktop\\各種情報\\knowledge\\protocol.md`\n- `C:\\Users\\tk030\\Desktop\\各種情報\\SKILLS.md`\n\n---\n\n## 主要ルール抜粋（全18条）\n\n### 第2条: 編集・品質・自律検証\n- 対象ファイルを直接、最小限かつ正確に編集すること。\n- 編集後は自律的にテストを行い、結果を確認すること。\n\n### 第3条: バージョン管理（マイクロコミット）\n- 承認された作業完了後は必ず `git commit` を実行すること。\n- 「関数1つ修正」「エラー1件解消」など動作確認できた極小ステップごとにコミットすること。\n\n### 第4条: 言語\n- 思考・回答・コメントすべて「日本語」で行うこと。\n\n### 第9条: 開発記録の永続保存\n- `implementation_plan.md`、`walkthrough.md` 等は作業完了時に `C:\\Users\\tk030\\Desktop\\各種情報\\Projects\\<プロジェクト名>\\` へコピー保存すること。\n- 各プロジェクトの `RECORD.md` を作業完了時に必ず更新すること。\n\n### 第11条: 開発スタイル・アライメント監査（最厳守）\n- 設定されているルールと実際の行動の乖離（ルール無視の繰り返し等）が生じていないかを定期的に自己監査すること。\n- 乖離を検知した場合、独断で処理を進めず速やかにユーザーに報告し、ルールまたは指示の整合性を調整すること。\n\n### 第13条: 捏造・ハルシネーション禁止\n- 技術的に不可能なことに直面した際、でっち上げや嘘の回答を決して行わないこと。\n- 「わからない・できない」場合は正直かつ具体的に報告し、代替案をセットで提示すること。\n\n### 第15条: 不要なリファクタリング禁止\n- 指示されたタスクと無関係の正常なコードには絶対に触れないこと。\n\n### 第17条: 巨大ファイルの自律分割\n- ファイルが300行を超えたらユーザーへ分割を提案すること。\n\n### 第18条: UI/UX妥協禁止\n- フロントエンドUIはプレーンなMVPで妥協せず、プレミアムなデザインをデフォルトで出力すること。\n",
-      "tokens": 1379,
-      "dependencies": [],
-      "analysis": {
-        "classes": [],
-        "functions": [],
-        "exports": []
-      }
-    },
-    {
-      "path": "docs/.clauderules",
-      "name": ".clauderules",
-      "size": 383,
-      "content": "# AI Developer Rules Pointer\r\nあなたへのすべての開発ルールとプロトコルは、プロジェクトルートの `SKILLS.md` および、各種情報内の `knowledge/protocol.md` に集約されています。\r\n作業を開始する前に必ず `SKILLS.md` と `knowledge/protocol.md` を読み込み、そこに記載された指示に必ず従ってください。\r\n",
-      "tokens": 148,
-      "dependencies": [],
-      "analysis": {
-        "classes": [],
-        "functions": [],
-        "exports": []
-      }
-    },
-    {
-      "path": "docs/.clinerules",
-      "name": ".clinerules",
-      "size": 383,
-      "content": "# AI Developer Rules Pointer\r\nあなたへのすべての開発ルールとプロトコルは、プロジェクトルートの `SKILLS.md` および、各種情報内の `knowledge/protocol.md` に集約されています。\r\n作業を開始する前に必ず `SKILLS.md` と `knowledge/protocol.md` を読み込み、そこに記載された指示に必ず従ってください。\r\n",
-      "tokens": 148,
-      "dependencies": [],
-      "analysis": {
-        "classes": [],
-        "functions": [],
-        "exports": []
-      }
-    },
-    {
-      "path": "docs/.cursorrules",
-      "name": ".cursorrules",
-      "size": 383,
-      "content": "# AI Developer Rules Pointer\r\nあなたへのすべての開発ルールとプロトコルは、プロジェクトルートの `SKILLS.md` および、各種情報内の `knowledge/protocol.md` に集約されています。\r\n作業を開始する前に必ず `SKILLS.md` と `knowledge/protocol.md` を読み込み、そこに記載された指示に必ず従ってください。\r\n",
-      "tokens": 148,
-      "dependencies": [],
-      "analysis": {
-        "classes": [],
-        "functions": [],
-        "exports": []
-      }
-    },
-    {
-      "path": "docs/.github/copilot-instructions.md",
-      "name": "copilot-instructions.md",
-      "size": 383,
-      "content": "# AI Developer Rules Pointer\r\nあなたへのすべての開発ルールとプロトコルは、プロジェクトルートの `SKILLS.md` および、各種情報内の `knowledge/protocol.md` に集約されています。\r\n作業を開始する前に必ず `SKILLS.md` と `knowledge/protocol.md` を読み込み、そこに記載された指示に必ず従ってください。\r\n",
-      "tokens": 148,
-      "dependencies": [],
-      "analysis": {
-        "classes": [],
-        "functions": [],
-        "exports": []
-      }
-    },
-    {
       "path": "docs/AI開発コンテキスト最適化ツール AI開発運用仕様書.txt",
       "name": "AI開発コンテキスト最適化ツール AI開発運用仕様書.txt",
       "size": 1989,
@@ -349,19 +284,6 @@
       "size": 7803,
       "content": "# AI開発コンテキスト最適化ツール - 開発工程管理表\n\n本ファイルは、AI開発コンテキスト最適化ツールの開発におけるマスター指示書（工程管理表）です。\n各フェーズ完了時の引き継ぎおよび新規チャット移行のルールを含め、本ファイルに沿って進捗を管理・同期します。\n\n---\n\n## 1. プロジェクト概要 ＆ ゴール\n* **開発の目的**：AI駆動開発における「コンテキスト肥大化」と「モデル間引継ぎの負荷」を解決し、トークン消費の最適化およびAI監査（Sonnet等）の効率を最大化する。\n* **成果物**：プロジェクトフォルダを選択するだけで、安全にローカル解析し、各モード（引継ぎ、移行、監査、文書化、フェーズ完了）に適したマークダウンを生成しコピペできるローカルWeb GUIツール。\n* **防衛方針**：完全ローカル動作（外部通信なし）を保証するため、静的スキャン `check-no-network.js` による自動検証を行う。\n\n---\n\n## 2. 動作環境・実行形態\n* **起動方式**: `最適化.bat` を起動することで、Node.js標準モジュールのみによる静的Webサーバー（`server.js`）が立ち上がり、`http://localhost:4173` でブラウザを自動起動します。\n* **解析の仕組み**: ブラウザの **File System Access API (showDirectoryPicker)** を用い、ソースコードをサーバー等に一切送信せずにクライアントサイドのJavaScript(TypeScript)だけで解析を行います。\n\n---\n\n## 3. ディレクトリ構造ルール\n将来の拡張（プラグイン化やモジュール移植）が容易なよう、**1ユニット1機能（1ファイル1責務）** の設計を徹底します。\n\n```plaintext\nAI開発コンテキスト最適化ツール/\n├── 最適化.bat              # 起動バッチ\n├── server.js              # Node.js標準モジュール製静的サーバー\n├── check-no-network.js    # 外部通信混入防止の静的スキャン\n├── PROJECT_PLAN.md        # 本工程管理表\n├── package.json\n├── tsconfig.json\n├── vite.config.ts\n├── dist/                  # ビルド成果物 (配布対象)\n├── ai_pipeline/           # ★追加：パイプライン連携用成果物フォルダ\n│   ├── result.json        # 実行結果（自動出力）\n│   ├── test_report.md     # テスト結果（自動出力）\n│   ├── log.md             # 開発ログ・判断記録（自動出力）\n│   └── development_chat_history.md # 開発チャット履歴（自動出力）\n└── src/\n    ├── app/               # UIエントリー\n    ├── components/        # UIユニット (Picker, Viewer, Indicator 等)\n    └── lib/\n        ├── parser/        # 解析エンジンユニット (ロジック比重 80%)\n        │   ├── file-tree.ts       # 木構造解析（除外リスト適用）\n        │   ├── file-reader.ts     # フィルタリング・読み込み\n        │   ├── dependency.ts      # 依存関係抽出\n        │   ├── module-analyzer.ts  # モジュール解析（クラス・関数・API抽出）\n        │   └── token-estimator.ts # 簡易トークン数・想定読込時間推定\n        ├── formatters/    # 出力フォーマッタ\n        │   ├── handover.ts\n        │   ├── transfer.ts\n        │   ├── audit.ts\n        │   ├── deep-audit.ts\n        │   ├── doc.ts\n        │   └── phase-summary.ts\n        └── config/\n            └── constants.ts   # 強化された除外ディレクトリリスト\n```\n\n---\n\n## 4. 工程管理表（進捗ステータス）\n\n* **全体進捗率**: ▓▓▓▓▓▓▓▓▓▓▓ 100% (12/12 フェーズ完了)\n* **防衛方針**: 実装前に必ず承認を取り、ルール違反を行わないこと。\n\n| フェーズ | ステータス | タスク内容 | 対象ファイル | 担当 |\n| :--- | :--- | :--- | :--- | :--- |\n| **Phase 1** | `[x]` 完了 | 基盤構築（Vite/TypeScript, bat, server.js, スキャンツール） | `package.json`, `server.js`, `最適化.bat` 等 | AI |\n| **Phase 2** | `[x]` 完了 | プロジェクト解析エンジン（Tree解析、フィルタ、除外リスト） | `src/lib/parser/file-tree.ts` 等 | AI |\n| **Phase 3** | `[x]` 完了 | 知識圧縮エンジン（依存、モジュール解析、トークン推定） | `src/lib/parser/module-analyzer.ts` 等 | AI |\n| **Phase 4** | `[x]` 完了 | Audit Mode（Audit Pack）生成機能（優先順位制御） | `src/lib/formatters/audit.ts` 等 | AI |\n| **Phase 5** | `[x]` 完了 | Deep Audit Mode（Deep Audit Pack）生成機能 | `src/lib/formatters/deep-audit.ts` 等 | AI |\n| **Phase 6** | `[x]` 完了 | Chat Handover Mode生成機能 | `src/lib/formatters/handover.ts` 等 | AI |\n| **Phase 7** | `[x]` 完了 | AI Transfer Mode生成機能（モデル間引継ぎ） | `src/lib/formatters/transfer.ts` 等 | AI |\n| **Phase 8** | `[x]` 完了 | Documentation Mode生成機能（記事作成用） | `src/lib/formatters/doc.ts` 等 | AI |\n| **Phase 9** | `[x]` 完了 | Phase Summary Mode生成機能とコピーUIの実装 | `src/lib/formatters/phase-summary.ts` 等 | AI |\n| **Phase 10**| `[x]` 完了 | テスト・全体動作検証（各PC動作テスト） | テストコード等 | AI |\n| **Phase 11**| `[x]` 完了 | 最終監査（Sonnetによる品質・バグ・リスク監査） | Audit Pack等 | AI |\n| **Phase 12**| `[x]` 完了 | リリースビルドと最小構成パッケージ化 | `dist/` | AI |\n\n---\n\n## 5. 成功条件（DoD）\n- [x] 外部通信を完全遮断していること（`check-no-network.js` で検証）\n- [x] `最適化.bat` のダブルクリックにより `localhost:4173` でブラウザが開き、ローカルで正しく動くこと\n- [x] `showDirectoryPicker()` を用いて外部フォルダ（`stock_analysis_kit` 等）を直接読み込み、CORS制限なく解析できること\n- [x] すべての出力モード（引継ぎ、移行、監査、ドキュメント）でマークダウンが出力され、1クリックでコピー可能であること\n- [x] Audit Packが優先順位制御され、3,000〜5,000トークン目安に収まっていること\n- [x] 生成画面に推定トークン数および想定読込時間が表示されていること\n- [x] 解析実行時、`ai_pipeline/` 内に `result.json`, `test_report.md`, `log.md`, `development_chat_history.md` が自動出力・更新されること\n\n---\n\n## 6. フェーズ完了 ＆ AI移行時の引継ぎルール\n各フェーズ完了時、またはチャットスレッド切り替え・モデル移行時（ChatGPT ⇄ Antigravity ⇄ Sonnet）には、必ず以下のサマリーテンプレートを生成し、新規チャットに移行してください。\n\n### 引継ぎ用サマリーテンプレート\n```markdown\n# 【引継ぎ】AI開発コンテキスト最適化ツール - Phase X 完了\n\n## 1. 完了事項 (Completed)\n- フェーズXで実装した機能や修正内容\n\n## 2. 現在のコード状態 (Current Status)\n- 主要ファイルの配置と動作状態\n- 工程管理表の進捗率\n\n## 3. 次フェーズのタスク (Next Actions)\n- 次回のチャットスレッドで最初に行うべき実装項目\n- 注意点・確認事項\n```\n---\n\n## 7. 現在地と次回のタスク\n* **【現在地】**：Phase 12 完了（全工程完了・リリース完了）\n* **【次回タスク】**：\n  - なし（プロジェクト完了）\n  - 今後は必要に応じて機能追加・バグフィックスを行います。\n",
       "tokens": 2932,
-      "dependencies": [],
-      "analysis": {
-        "classes": [],
-        "functions": [],
-        "exports": []
-      }
-    },
-    {
-      "path": "docs/SKILLS.md",
-      "name": "SKILLS.md",
-      "size": 2703,
-      "content": "# Agent Skills & Domain Knowledge Router\r\n\r\nこのファイルは、全プロジェクト共通の基本スキルと、専門領域（ドメイン）ごとの知識ファイルをルーティングするためのインデックスです。\r\n\r\n---\r\n\r\n## 1. 共通スキル (Common Skills)\r\n\r\n* **参照ファイル**: `knowledge/protocol.md`\r\n- **対象**: すべてのプロジェクト\r\n- **内容**: AIエージェントの基本行動規範（全18箇条）、マイクロコミット、リファクタリングの禁止、デザイン要件など。\r\n- **指示**: いかなる作業を開始する際も、各ドメイン知識と併せて必ずこのプロトコルを読み込み、厳格に順守すること。\r\n\r\n---\r\n\r\n## 2. ドメイン知識 (Domain Knowledge)\r\n\r\n作業中のプロジェクトの性質に合わせて、以下のドメイン知識ファイル（`knowledge/` フォルダ内）を読み込み、専門スキルを適用してください。\r\n\r\n### 🎲 ロト関連プロジェクトの場合\r\n**参照ファイル**: `knowledge/lottery.md`\r\n- **対象プロジェクト例**: 排除予想システム、RIVER_FLOW_PUBLISHERなど\r\n- **内容**: 排除理論、7指標、川分析、バックテスト等の専門ロジック\r\n\r\n### 🤖 AI開発関連プロジェクトの場合\r\n**参照ファイル**: `knowledge/ai-development.md`\r\n- **対象プロジェクト例**: AI開発コンテキスト管理ツールV2、BaseKitなど\r\n- **内容**: AI開発フロー、コンテキスト最適化、SKILLS/RULES設計、MCP連携\r\n\r\n### 🏢 業務システム関連プロジェクトの場合\r\n**参照ファイル**: `knowledge/business.md`\r\n- **対象プロジェクト例**: 業務用SNSシステム、複式簿記システム、個人業務効率化ツールなど\r\n- **内容**: 認証認可、CRUD、DB設計、UI/UX設計、セキュリティ\r\n\r\n---\r\n\r\n## 運用ルール\r\n\r\n1. AIエージェントは作業開始時に、現在のプロジェクトがどのドメインに属するかを判定すること。\r\n2. 判定したドメインに対応する `knowledge/*.md` を読み込み、その指示に従うこと。\r\n3. 専門的なロジックやルールは、この `SKILLS.md` に直接書かず、各ドメイン知識ファイル（`knowledge/*.md`）に追記すること。\r\n4. **【能動的提案の義務】** AIは開発中に「他のプロジェクトでも再利用できる有益なルール・設計方針（ベストプラクティス）」や「新しいスキル」を発見した場合、自律的に抽出し、ユーザーへ「これをドメイン知識（または共通スキル）に追記しませんか？」と提案すること。\r\n",
-      "tokens": 1082,
       "dependencies": [],
       "analysis": {
         "classes": [],
@@ -466,19 +388,6 @@
       "size": 12713,
       "content": "---\ndescription: 完成したプログラムを、要件・仕様・実装・テスト・エラー処理・セキュリティ・保守性まで横断的に監査する品質監査Skill。仕様外の機能追加を勝手に要求せず、問題・改善候補・追加提案を明確に分離する。実装完了後の品質確認、修正後の再監査に使用する。\nname: project-quality-audit\n---\n\n# Project Quality Audit\n\n## 1. 目的\n\n完成したプログラムに対して、以下を横断的に確認する。\n\n-   要件を満たしているか\n-   仕様どおり実装されているか\n-   明らかなバグや潜在的なバグがないか\n-   異常系・境界値への対応が不足していないか\n-   エラー処理が適切か\n-   セキュリティ上の問題がないか\n-   テストが不足していないか\n-   保守性や構造上の問題がないか\n-   UI/UX上の問題がないか\n-   仕様外の不要な実装がないか\n\nこのSkillの目的は、単なるコードレビューではなく、**「要求されたものを正しく、安全に、安定して動作する形で実装できているか」**を確認することである。\n\n------------------------------------------------------------------------\n\n## 2. 基本方針\n\n### 2.1 仕様を基準とする\n\n利用可能な資料から、可能な限り以下を確認する。\n\n1.  要件定義書\n2.  仕様書\n3.  設計書\n4.  README\n5.  テスト仕様・テスト結果\n6.  ソースコード\n7.  設定ファイル\n8.  その他プロジェクト関連資料\n\n仕様が存在する場合、仕様を基準として実装を評価する。\n\n### 2.2 仕様を勝手に変更しない\n\n以下を明確に区別する。\n\n-   バグ\n-   仕様不一致\n-   実装漏れ\n-   改善候補\n-   追加機能提案\n\n仕様に存在しない機能を「改善」として勝手に追加要求しない。\n\n要件を超える機能追加は、必要であれば**追加提案**として別枠で報告する。\n\n### 2.3 不明点を推測で断定しない\n\n資料から判断できない事項については、\n\n-   「確認不能」\n-   「追加確認が必要」\n-   「仕様記載なし」\n\nなどとして扱う。\n\n根拠なくバグと断定しない。\n\n------------------------------------------------------------------------\n\n## 3. 監査フロー\n\n以下の順序で監査する。\n\n### Step 1: プロジェクト資料の確認\n\nプロジェクトに存在する資料を確認し、監査対象と基準を把握する。\n\n確認対象例:\n\n-   README.md\n-   REQUIREMENTS.md\n-   SPECIFICATION.md\n-   ARCHITECTURE.md\n-   DATA_MODEL.md\n-   TEST_PLAN.md\n-   その他設計・運用資料\n\n資料間に矛盾がある場合は、その矛盾自体を問題として記録する。\n\n------------------------------------------------------------------------\n\n### Step 2: プロジェクト構成の確認\n\n以下を確認する。\n\n-   ディレクトリ構成\n-   ファイル構成\n-   モジュール構成\n-   依存関係\n-   設定ファイル\n-   不要なファイル\n-   使用されていない可能性のあるコード\n-   重複処理\n-   不自然な構造\n\nただし、単なる好みの違いを問題として指摘しない。\n\n------------------------------------------------------------------------\n\n### Step 3: 要件・仕様と実装の照合\n\n各要件・仕様について、実装状況を確認する。\n\n確認する項目:\n\n-   実装済み\n-   未実装\n-   部分実装\n-   仕様と異なる実装\n-   意図しない追加実装\n-   仕様間の矛盾\n-   実装とREADMEの不一致\n\n特に重要な要件については、漏れがないか個別に確認する。\n\n------------------------------------------------------------------------\n\n### Step 4: コード監査\n\nソースコードを確認し、以下を調査する。\n\n#### バグ\n\n-   明らかなロジックミス\n-   条件分岐の誤り\n-   変数・状態の不整合\n-   データ処理の誤り\n-   保存・読み込みの問題\n-   ファイル処理の問題\n-   非同期処理の問題\n-   リソース解放漏れ\n-   想定外の状態\n\n#### 潜在的なバグ\n\n-   特定条件でのみ発生する問題\n-   初回実行時だけ発生する問題\n-   再実行時に発生する問題\n-   データ量増加時の問題\n-   連続操作時の問題\n-   エラー発生後の状態不整合\n\n#### エラー処理\n\n-   例外を適切に処理しているか\n-   エラーを握り潰していないか\n-   ユーザーに適切な情報を提示しているか\n-   復旧可能なエラーと致命的エラーを区別しているか\n\n------------------------------------------------------------------------\n\n### Step 5: セキュリティ監査\n\n必要に応じて以下を確認する。\n\n-   入力値検証\n-   認証\n-   認可\n-   ファイルアクセス\n-   パス操作\n-   外部入力\n-   コマンド実行\n-   SQL等への入力\n-   秘密情報のハードコード\n-   APIキー等の漏洩\n-   ログへの秘密情報出力\n-   不適切な権限\n-   危険な依存関係\n\nプロジェクトの性質上該当しない項目は無理に指摘しない。\n\n------------------------------------------------------------------------\n\n### Step 6: 異常系・境界値の洗い出し\n\n以下のようなケースを検討する。\n\n-   空入力\n-   NULL\n-   空ファイル\n-   存在しないファイル\n-   壊れたファイル\n-   不正な形式\n-   文字列を数値として入力\n-   数値を文字列として入力\n-   0\n-   負数\n-   最大値\n-   最小値\n-   上限超過\n-   大量データ\n-   長すぎる文字列\n-   特殊文字\n-   重複データ\n-   同一操作の連続実行\n-   二重クリック\n-   キャンセル\n-   処理途中での終了\n-   保存途中での異常終了\n\nプロジェクトに関係するケースのみ評価する。\n\n------------------------------------------------------------------------\n\n### Step 7: テスト状況の確認\n\nテストが存在する場合は、以下を確認する。\n\n-   正常系\n-   異常系\n-   境界値\n-   エラー処理\n-   データ保存・読み込み\n-   主要機能\n-   主要画面\n-   回帰テスト\n\nテストが不足している場合は、**「バグ」と「テスト不足」を混同しない**。\n\n------------------------------------------------------------------------\n\n### Step 8: ログ・エラー・実行結果の確認\n\n利用可能なログ、コンソール出力、テスト結果などを確認する。\n\n特に以下を確認する。\n\n-   Error\n-   Exception\n-   Traceback\n-   Warning\n-   Failed\n-   Timeout\n-   未処理例外\n-   想定外の警告\n\n警告だけで必ずしも問題とは限らないため、内容を評価してから判定する。\n\n------------------------------------------------------------------------\n\n### Step 9: UI/UX監査\n\nUIを持つアプリケーションの場合、以下を確認する。\n\n-   操作方法が分かるか\n-   入力エラーが分かるか\n-   エラーメッセージが適切か\n-   操作不能になるケースがないか\n-   戻る・キャンセルが適切か\n-   状態が分かるか\n-   二重操作への対応\n-   不自然な画面遷移\n\n機能そのものに問題がない場合でも、重要な操作性の問題は改善候補として記録する。\n\n------------------------------------------------------------------------\n\n## 4. 問題の分類\n\n発見した事項を以下に分類する。\n\n### Critical\n\n直ちに修正が必要。\n\n例:\n\n-   アプリケーションが起動しない\n-   重大なデータ破壊\n-   重大なセキュリティ問題\n-   主要機能が使用不能\n\n### High\n\n優先的に修正が必要。\n\n例:\n\n-   主要機能のバグ\n-   重要な仕様不一致\n-   重要データの処理ミス\n-   重大なエラー処理不足\n\n### Medium\n\n修正を推奨。\n\n例:\n\n-   特定条件で発生する問題\n-   入力検証不足\n-   中程度のUX問題\n-   保守性上の問題\n\n### Low\n\n軽微な問題。\n\n例:\n\n-   軽微なUI改善\n-   コード整理\n-   軽微な重複\n-   将来的に改善可能な箇所\n\n### Suggestion\n\n必須修正ではない改善提案。\n\n例:\n\n-   より便利にする案\n-   将来的な拡張案\n-   パフォーマンス改善案\n-   リファクタリング案\n\n### Additional Feature\n\n現在の要件には存在しない追加機能。\n\n**バグ・修正必須項目とは完全に分離する。**\n\n------------------------------------------------------------------------\n\n## 5. 各問題の報告形式\n\n各問題について、可能な限り以下を示す。\n\n-   ID\n-   分類\n-   重要度\n-   対象ファイル\n-   対象箇所\n-   問題内容\n-   根拠\n-   発生条件\n-   影響\n-   推奨対応\n-   修正必須かどうか\n\n例:\n\n  ----------------------------------------------------------------------------------------------\n  ID             分類           重要度         問題                               推奨対応\n  -------------- -------------- -------------- ---------------------------------- --------------\n  QA-001         バグ           High           保存処理で例外発生の可能性         修正必須\n\n  QA-002         仕様不一致     Medium         仕様では入力検証ありだが実装なし   修正推奨\n\n  QA-003         テスト不足     Medium         上限値のテストなし                 テスト追加\n\n  QA-004         改善           Low            エラー表示が分かりにくい           任意改善\n\n  QA-005         追加機能       Suggestion     CSV出力機能を追加可能              別要望\n  ----------------------------------------------------------------------------------------------\n\n------------------------------------------------------------------------\n\n## 6. 監査結果\n\n最終的に以下の構成で報告する。\n\n### 監査概要\n\n-   対象プロジェクト\n-   確認した資料\n-   確認したコード\n-   実施した監査\n-   総合判定\n\n### 重大問題\n\nCritical / High の問題を最初に提示する。\n\n### 仕様不一致\n\n仕様と実装の違いを整理する。\n\n### バグ・潜在的バグ\n\n発見したバグを整理する。\n\n### セキュリティ\n\nセキュリティ上の問題を整理する。\n\n### テスト不足\n\n未確認・不足しているテストを整理する。\n\n### 改善候補\n\n必須ではない改善を整理する。\n\n### 追加機能提案\n\n現在の仕様外の機能を別枠で整理する。\n\n### 修正優先順位\n\n以下の順番を基本とする。\n\n1.  Critical\n2.  High\n3.  Medium\n4.  Low\n5.  Suggestion\n6.  Additional Feature\n\n### 総合判定\n\n以下のいずれかで判定する。\n\n-   **PASS**: 重大な問題なし\n-   **PASS WITH NOTES**: 重大な問題はないが注意事項あり\n-   **REQUIRES FIX**: 修正が必要\n-   **BLOCKED**: 情報不足等により監査を完了できない\n\n------------------------------------------------------------------------\n\n## 7. 監査時の禁止事項\n\n以下を行わない。\n\n-   根拠のないバグ認定\n-   仕様外の機能を勝手に追加要求\n-   好みだけを理由とした問題認定\n-   軽微な改善を重大問題として扱う\n-   テスト不足を実装バグと断定する\n-   不明な仕様を推測して判定する\n-   問題を見つけること自体を目的にする\n\n------------------------------------------------------------------------\n\n## 8. 修正後の再監査\n\n修正が行われた場合は、可能な限り再監査する。\n\n再監査では、\n\n1.  指摘事項が修正されたか\n2.  修正によって新しい問題が発生していないか\n3.  既存機能が壊れていないか\n4.  仕様との整合性が維持されているか\n5.  回帰問題が発生していないか\n\nを確認する。\n\n「指摘箇所が直った」だけで完了とせず、**修正による副作用**も確認する。\n\n------------------------------------------------------------------------\n\n## 9. 監査の原則\n\nこのSkillでは、\n\n> **「問題を探す」ことより、「正しく判断する」ことを優先する。**\n\nバグがなければ「問題なし」と明確に報告する。\n\n改善案しかない場合は、改善案として報告する。\n\n仕様外の機能が必要だと思われても、現在の要件に問題がなければ追加機能として分離する。\n\n最終的には、開発者が\n\n**「何を直すべきか」** **「何は直さなくてもよいか」**\n**「何は次の要望として扱うべきか」**\n\nを判断できる状態にする。\n",
       "tokens": 4876,
-      "dependencies": [],
-      "analysis": {
-        "classes": [],
-        "functions": [],
-        "exports": []
-      }
-    },
-    {
-      "path": "knowledge/SKILLS.md",
-      "name": "SKILLS.md",
-      "size": 2703,
-      "content": "# Agent Skills & Domain Knowledge Router\r\n\r\nこのファイルは、全プロジェクト共通の基本スキルと、専門領域（ドメイン）ごとの知識ファイルをルーティングするためのインデックスです。\r\n\r\n---\r\n\r\n## 1. 共通スキル (Common Skills)\r\n\r\n* **参照ファイル**: `knowledge/protocol.md`\r\n- **対象**: すべてのプロジェクト\r\n- **内容**: AIエージェントの基本行動規範（全18箇条）、マイクロコミット、リファクタリングの禁止、デザイン要件など。\r\n- **指示**: いかなる作業を開始する際も、各ドメイン知識と併せて必ずこのプロトコルを読み込み、厳格に順守すること。\r\n\r\n---\r\n\r\n## 2. ドメイン知識 (Domain Knowledge)\r\n\r\n作業中のプロジェクトの性質に合わせて、以下のドメイン知識ファイル（`knowledge/` フォルダ内）を読み込み、専門スキルを適用してください。\r\n\r\n### 🎲 ロト関連プロジェクトの場合\r\n**参照ファイル**: `knowledge/lottery.md`\r\n- **対象プロジェクト例**: 排除予想システム、RIVER_FLOW_PUBLISHERなど\r\n- **内容**: 排除理論、7指標、川分析、バックテスト等の専門ロジック\r\n\r\n### 🤖 AI開発関連プロジェクトの場合\r\n**参照ファイル**: `knowledge/ai-development.md`\r\n- **対象プロジェクト例**: AI開発コンテキスト管理ツールV2、BaseKitなど\r\n- **内容**: AI開発フロー、コンテキスト最適化、SKILLS/RULES設計、MCP連携\r\n\r\n### 🏢 業務システム関連プロジェクトの場合\r\n**参照ファイル**: `knowledge/business.md`\r\n- **対象プロジェクト例**: 業務用SNSシステム、複式簿記システム、個人業務効率化ツールなど\r\n- **内容**: 認証認可、CRUD、DB設計、UI/UX設計、セキュリティ\r\n\r\n---\r\n\r\n## 運用ルール\r\n\r\n1. AIエージェントは作業開始時に、現在のプロジェクトがどのドメインに属するかを判定すること。\r\n2. 判定したドメインに対応する `knowledge/*.md` を読み込み、その指示に従うこと。\r\n3. 専門的なロジックやルールは、この `SKILLS.md` に直接書かず、各ドメイン知識ファイル（`knowledge/*.md`）に追記すること。\r\n4. **【能動的提案の義務】** AIは開発中に「他のプロジェクトでも再利用できる有益なルール・設計方針（ベストプラクティス）」や「新しいスキル」を発見した場合、自律的に抽出し、ユーザーへ「これをドメイン知識（または共通スキル）に追記しませんか？」と提案すること。\r\n",
-      "tokens": 1082,
       "dependencies": [],
       "analysis": {
         "classes": [],
@@ -2749,7 +2658,7 @@
       }
     }
   ],
-  "folderStructureText": "ai-development-context-optimizer/\n├── .agents\n│   ├── AGENTS.md\n│   ├── agents\n│   │   ├── bug-fixer.md\n│   │   ├── context-archivist.md\n│   │   ├── doc-writer.md\n│   │   ├── planner.md\n│   │   └── reviewer.md\n│   └── mcp_config.json\n├── .clauderules\n├── .clinerules\n├── .cursorrules\n├── .github\n│   ├── copilot-instructions.md\n│   └── workflows\n│       └── deploy.yml\n├── .gitignore\n├── AI_RULES.md\n├── EVALUATION_REPORT.md\n├── LICENSE\n├── README.md\n├── SKILLS.md\n├── check-no-network.js\n├── docs\n│   ├── .agents\n│   │   └── AGENTS.md\n│   ├── .clauderules\n│   ├── .clinerules\n│   ├── .cursorrules\n│   ├── .github\n│   │   └── copilot-instructions.md\n│   ├── AI開発コンテキスト最適化ツール AI開発運用仕様書.txt\n│   ├── AI開発コンテキスト最適化ツール システム仕様書.txt\n│   ├── AI開発コンテキスト最適化ツール 出力フォーマット仕様書.txt\n│   ├── AI開発コンテキスト最適化ツール 統合開発計画書.txt\n│   ├── PROJECT_PLAN.md\n│   ├── SKILLS.md\n│   └── 監査観点整理.md\n├── index.html\n├── knowledge\n│   ├── SKILLS.md\n│   ├── ai-development.md\n│   ├── business.md\n│   ├── lottery.md\n│   ├── protocol.md\n│   ├── quality-audit.md\n│   └── ツール起動BAT標準仕様書.md\n├── package-lock.json\n├── package.json\n├── postcss.config.js\n├── release_package\n│   └── AI開発コンテキスト最適化ツール-Portable\n│       ├── README.md\n│       ├── server.js\n│       └── 最適化.bat\n├── server.js\n├── src\n│   ├── app\n│   │   └── App.tsx\n│   ├── index.css\n│   ├── lib\n│   │   ├── config\n│   │   │   └── constants.ts\n│   │   ├── formatters\n│   │   │   ├── __tests__\n│   │   │   │   ├── verify-audit.ts\n│   │   │   │   ├── verify-deep-audit.ts\n│   │   │   │   ├── verify-doc.ts\n│   │   │   │   ├── verify-handover.ts\n│   │   │   │   ├── verify-phase-summary.ts\n│   │   │   │   └── verify-transfer.ts\n│   │   │   ├── audit.ts\n│   │   │   ├── deep-audit.ts\n│   │   │   ├── doc.ts\n│   │   │   ├── handover.ts\n│   │   │   ├── phase-summary.ts\n│   │   │   └── transfer.ts\n│   │   └── parser\n│   │       ├── __tests__\n│   │       │   └── verify-compression.ts\n│   │       ├── dependency.ts\n│   │       ├── file-reader.ts\n│   │       ├── file-tree.ts\n│   │       ├── module-analyzer.ts\n│   │       ├── project-analyzer.ts\n│   │       ├── token-estimator.ts\n│   │       └── types.ts\n│   ├── main.tsx\n│   └── types\n│       └── window.d.ts\n├── tailwind.config.js\n├── tsconfig.json\n├── tsconfig.node.json\n├── verify-all.ts\n├── vite.config.ts\n└── 最適化.bat\n",
-  "totalBytes": 500858,
-  "totalTokens": 153435
+  "folderStructureText": "ai-development-context-optimizer/\n├── .agents\n│   ├── AGENTS.md\n│   ├── agents\n│   │   ├── bug-fixer.md\n│   │   ├── context-archivist.md\n│   │   ├── doc-writer.md\n│   │   ├── planner.md\n│   │   └── reviewer.md\n│   └── mcp_config.json\n├── .clauderules\n├── .clinerules\n├── .cursorrules\n├── .github\n│   ├── copilot-instructions.md\n│   └── workflows\n│       └── deploy.yml\n├── .gitignore\n├── AI_RULES.md\n├── EVALUATION_REPORT.md\n├── LICENSE\n├── README.md\n├── SKILLS.md\n├── check-no-network.js\n├── docs\n│   ├── AI開発コンテキスト最適化ツール AI開発運用仕様書.txt\n│   ├── AI開発コンテキスト最適化ツール システム仕様書.txt\n│   ├── AI開発コンテキスト最適化ツール 出力フォーマット仕様書.txt\n│   ├── AI開発コンテキスト最適化ツール 統合開発計画書.txt\n│   ├── PROJECT_PLAN.md\n│   └── 監査観点整理.md\n├── index.html\n├── knowledge\n│   ├── ai-development.md\n│   ├── business.md\n│   ├── lottery.md\n│   ├── protocol.md\n│   ├── quality-audit.md\n│   └── ツール起動BAT標準仕様書.md\n├── package-lock.json\n├── package.json\n├── postcss.config.js\n├── release_package\n│   └── AI開発コンテキスト最適化ツール-Portable\n│       ├── README.md\n│       ├── server.js\n│       └── 最適化.bat\n├── server.js\n├── src\n│   ├── app\n│   │   └── App.tsx\n│   ├── index.css\n│   ├── lib\n│   │   ├── config\n│   │   │   └── constants.ts\n│   │   ├── formatters\n│   │   │   ├── __tests__\n│   │   │   │   ├── verify-audit.ts\n│   │   │   │   ├── verify-deep-audit.ts\n│   │   │   │   ├── verify-doc.ts\n│   │   │   │   ├── verify-handover.ts\n│   │   │   │   ├── verify-phase-summary.ts\n│   │   │   │   └── verify-transfer.ts\n│   │   │   ├── audit.ts\n│   │   │   ├── deep-audit.ts\n│   │   │   ├── doc.ts\n│   │   │   ├── handover.ts\n│   │   │   ├── phase-summary.ts\n│   │   │   └── transfer.ts\n│   │   └── parser\n│   │       ├── __tests__\n│   │       │   └── verify-compression.ts\n│   │       ├── dependency.ts\n│   │       ├── file-reader.ts\n│   │       ├── file-tree.ts\n│   │       ├── module-analyzer.ts\n│   │       ├── project-analyzer.ts\n│   │       ├── token-estimator.ts\n│   │       └── types.ts\n│   ├── main.tsx\n│   └── types\n│       └── window.d.ts\n├── tailwind.config.js\n├── tsconfig.json\n├── tsconfig.node.json\n├── verify-all.ts\n├── vite.config.ts\n└── 最適化.bat\n",
+  "totalBytes": 490547,
+  "totalTokens": 149300
 }
