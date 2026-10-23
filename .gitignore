@@ -47,3 +47,10 @@ __tests__/
 # 開発ドキュメント（個人パス混入防止）
 EVALUATION_REPORT.md
 log.md
+
+# 開発ドキュメント除外（フェーズ2-B）
+development_chat_history.md
+test_report.md
+PROJECT_PLAN.md
+統合開発計画書.txt
+監査観点整理.md
