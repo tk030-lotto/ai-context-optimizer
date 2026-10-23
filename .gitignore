@@ -43,3 +43,7 @@ GEMINI.md
 # Tests
 __tests__/
 *.test.ts
+
+# 開発ドキュメント（個人パス混入防止）
+EVALUATION_REPORT.md
+log.md
